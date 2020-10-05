@@ -1,19 +1,52 @@
 #include "mathchannelcomponent.h"
+#include <QDebug>
 
-MathChannelComponent::MathChannelComponent()
+MathChannelComponent::~MathChannelComponent()
+{
+    //  Deletion of object is called from MainWindow
+    //  Here we only need to delete the layout
+    while (QLayoutItem* item = layout->takeAt(0))
+    {
+        if (QWidget* widget = item->widget())
+            widget->deleteLater();
+        delete item;
+    }
+    layout->deleteLater();
+}
+
+MathChannelComponent::MathChannelComponent(int id): _id(id)
 {
     labels[0] = new QLabel("Input channel");
     labels[1] = new QLabel("Math channel");
     labels[2] = new QLabel("Math");
-    labels[3] = new QLabel("Channel label");
 
     mathChSelector = new QComboBox();
     inChSelector = new QSpinBox();
-    chName = new QLineEdit();
 
     mathSelector = new QComboBox();
     mathSelector->addItem("Add");
     mathSelector->addItem("Subtract");
+
+    deleteButton = new QPushButton();
+    deleteButton->setText("X");
+    deleteButton->setFixedWidth(25);
+
+    layout = new QHBoxLayout();
+    layout->setObjectName("mathChannel_"+QString::number(_id));
+
+    horSpacer = new QSpacerItem (20,20,QSizePolicy::Expanding);
+
+    //  Construct layout with all the elements
+    layout->addWidget(labels[0], 0, Qt::AlignLeft);
+    layout->addWidget(inChSelector, 0, Qt::AlignLeft);
+    layout->addWidget(labels[1], 0, Qt::AlignLeft);
+    layout->addWidget(mathChSelector, 0, Qt::AlignLeft);
+    layout->addWidget(labels[2], 0, Qt::AlignLeft);
+    layout->addWidget(mathSelector, 0, Qt::AlignLeft);
+    layout->addSpacerItem(horSpacer);
+    layout->addWidget(deleteButton, 0, Qt::AlignLeft);
+
+    QObject::connect(deleteButton, &QPushButton::pressed, this, &MathChannelComponent::deleteComponent);
 }
 
 void MathChannelComponent::UpdateMathCh(int *mathCh, int size)
@@ -37,6 +70,12 @@ void MathChannelComponent::SetInCh(int inCh)
 {
     inChSelector->setValue(inCh);
 }
+
+int MathChannelComponent::GetInCh()
+{
+    return inChSelector->value();
+}
+
 void MathChannelComponent::SetMathCh(int mathCh)
 {
     bool valid = false;
@@ -52,9 +91,10 @@ void MathChannelComponent::SetMathCh(int mathCh)
     if (valid)
         mathChSelector->setCurrentIndex(i);
 }
-void MathChannelComponent::SetName(QString name)
+
+int MathChannelComponent::GetMathCh()
 {
-    chName->setText(name);
+    return mathChSelector->currentText().toInt();
 }
 
 void MathChannelComponent::SetMath(int math)
@@ -64,3 +104,29 @@ void MathChannelComponent::SetMath(int math)
     mathSelector->setCurrentIndex(math);
 }
 
+int MathChannelComponent::GetMath()
+{
+    //  0 - Add
+    //  1 - Subtract
+    return mathSelector->currentIndex();
+}
+
+void MathChannelComponent::deleteComponent()
+{
+    //deleteLater();
+    emit deleteRequested(_id);
+}
+
+QHBoxLayout* MathChannelComponent::GetLayout()
+{
+    return layout;
+}
+
+void MathChannelComponent::SetID(int id)
+{
+    _id = id;
+}
+int  MathChannelComponent::GetID()
+{
+    return _id;
+}

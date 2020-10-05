@@ -3,27 +3,54 @@
 
 #include <QLabel>
 #include <QSpinBox>
-#include <QLineEdit>
+#include <QPushButton>
 #include <QSpinBox>
 #include <QComboBox>
 #include <QString>
+#include <QHBoxLayout>
+#include <QSpacerItem>
 
-class MathChannelComponent
+
+class MathChannelComponent :  public QObject
 {
+    Q_OBJECT
+
 public:
-    MathChannelComponent();
+    MathChannelComponent(int id);
+    ~MathChannelComponent();
 
     void UpdateMathCh(int *mathCh, int size);
-    void SetInCh(int inCh);
-    void SetMathCh(int mathCh);
-    void SetName(QString name);
-    void SetMath(int math);
 
-    QLabel *labels[4];
+    //  Input channel
+    void SetInCh(int inCh);
+    int GetInCh();
+    //  Math channel
+    void SetMathCh(int mathCh);
+    int GetMathCh();
+    //  Math operation
+    void SetMath(int math);
+    int GetMath();
+    //  ID of the component
+    void SetID(int id);
+    int  GetID();
+
+    QHBoxLayout* GetLayout();
+
+    QLabel *labels[3];
     QComboBox *mathChSelector;
     QComboBox *mathSelector;
     QSpinBox *inChSelector;
-    QLineEdit *chName;
+    QPushButton *deleteButton;
+    QHBoxLayout *layout;
+    QSpacerItem *horSpacer;
+
+signals:
+    void deleteRequested(int id);
+private slots:
+    void deleteComponent();
+private:
+    //  Unique identifier
+    int _id;
 };
 
 #endif // MATHCHANNELCOMPONENT_H

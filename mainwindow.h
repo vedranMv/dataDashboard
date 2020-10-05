@@ -4,6 +4,7 @@
 #include <QWidget>
 #include "serialAdapter/serialadapter.h"
 #include "helperObjects/channel/channel.h"
+#include "helperObjects/mathComponent/mathchannelcomponent.h"
 #include <QLabel>
 #include <vector>
 
@@ -28,6 +29,8 @@ public Q_SLOTS:
     void toggleConnection();
     void refreshUI();
 
+public slots:
+    void UpdateAvailMathCh();
 
 private slots:
     void on_frameStartCh_editingFinished();
@@ -37,6 +40,10 @@ private slots:
     void on_frameEndSep_editingFinished();
 
     void on_channelNumber_valueChanged(int arg1);
+
+    void on_addMathComp_clicked();
+
+    void on_mathChXen_clicked();
 
 private:
     void LoadSettings();
@@ -49,6 +56,7 @@ private:
     QLabel      *time;
     QTimer      *mainTimer;
     std::vector<Channel*>ch;
+    std::vector<MathChannelComponent*>mathComp;
 };
 
 #endif // MAINWINDOW_H

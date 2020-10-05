@@ -20,6 +20,7 @@ INSTALLS += target
 
 SOURCES += main.cpp scatter/scatterdatamodifier.cpp \
         helperObjects/channel/channel.cpp \
+        helperObjects/mathComponent/mathchannelcomponent.cpp \
         mainwindow.cpp \
         orientation_3d/orientationwidget.cpp \
         orientation_3d/geometryengine.cpp \
@@ -28,6 +29,7 @@ SOURCES += main.cpp scatter/scatterdatamodifier.cpp \
 
 HEADERS += scatter/scatterdatamodifier.h \
     helperObjects/channel/channel.h \
+    helperObjects/mathComponent/mathchannelcomponent.h \
     mainwindow.h \
            scatter/ScatterDataPlot.h \
     orientation_3d/orientationwidget.h \

@@ -98,6 +98,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(dataAdapter, &SerialAdapter::error, this, &MainWindow::LogLine);
 
+    //  Connect channel enable signals to slot
+    QObject::connect(ui->mathCh1en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
+    QObject::connect(ui->mathCh2en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
+    QObject::connect(ui->mathCh3en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
+    QObject::connect(ui->mathCh4en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
+    QObject::connect(ui->mathCh5en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
+    QObject::connect(ui->mathCh6en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
+
     //TODO: Add data bits, parity and flow control fields
     //  For now assume 8bits, no pariy, no flow control, 1 stop bit
     //  Connect/disconnect button
@@ -286,4 +294,62 @@ void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
             clearLayout(childLayout, deleteWidgets);
         delete item;
     }
+}
+
+/**
+ * @brief MainWindow::on_addMathComp_clicked
+ * Add new math component
+ */
+void MainWindow::on_addMathComp_clicked()
+{
+    QString id = QString::number(mathComp.size());
+    MathChannelComponent *tmp = new MathChannelComponent();
+    QHBoxLayout *entry = new QHBoxLayout();
+
+
+    tmp->SetInCh(settings->value("math/component"+id+"inCh","0").toInt());
+    tmp->SetMath(settings->value("math/component"+id+"mathCh","1").toInt());
+    tmp->SetMath(settings->value("math/component"+id+"math","0").toInt());
+    //  0 - Add
+    //  1 - Subtract
+
+    mathComp.push_back(tmp);
+    entry->addWidget(tmp->labels[0], 0, Qt::AlignLeft);
+    entry->addWidget(tmp->inChSelector, 0, Qt::AlignLeft);
+    entry->addWidget(tmp->labels[1], 0, Qt::AlignLeft);
+    entry->addWidget(tmp->mathChSelector, 0, Qt::AlignLeft);
+    entry->addWidget(tmp->labels[2], 0, Qt::AlignLeft);
+    entry->addWidget(tmp->mathSelector, 0, Qt::AlignLeft);
+    ui->mathCompLayout->addLayout(entry);
+}
+
+void MainWindow::UpdateAvailMathCh()
+{
+    int mathCh[6] = {0};
+    int count = 0;
+
+    if (ui->mathCh1en->isChecked())
+        mathCh[count++] = 1;
+    if (ui->mathCh2en->isChecked())
+        mathCh[count++] = 2;
+    if (ui->mathCh3en->isChecked())
+        mathCh[count++] = 3;
+    if (ui->mathCh4en->isChecked())
+        mathCh[count++] = 4;
+    if (ui->mathCh5en->isChecked())
+        mathCh[count++] = 5;
+    if (ui->mathCh6en->isChecked())
+        mathCh[count++] = 6;
+
+    for (MathChannelComponent* X : mathComp)
+    {
+        X->UpdateMathCh(mathCh, count);
+    }
+
+}
+
+void MainWindow::on_mathChXen_clicked()
+{
+
+    UpdateAvailMathCh();
 }

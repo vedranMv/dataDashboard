@@ -43,7 +43,9 @@ private slots:
 
     void on_addMathComp_clicked();
 
-    void on_mathChXen_clicked();
+    void on_add3D_clicked();
+
+    void on_delete_updateMathComp(int id);
 
 private:
     void LoadSettings();

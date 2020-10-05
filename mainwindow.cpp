@@ -23,6 +23,8 @@
 #include <QtGui/QScreen>
 #include <QtGui/QFontDatabase>
 
+//#include <QMdiSubWindow>
+
 #include <QSerialPortInfo>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -31,6 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     //  Setup UI made in designer
     ui->setupUi(this);
+
     //  Initialize the variables
     dataAdapter = new SerialAdapter();
     mainTimer = new QTimer();
@@ -54,24 +57,11 @@ MainWindow::MainWindow(QWidget *parent) :
     container->setMaximumSize(screenSize/4);
     container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    //! Window layout
-    //! |---------|------|
-    //! |         |  3   |
-    //! |   1     |------|
-    //! |         |  4   |
-    //! |---------|------|
-    //! |   2     |  5   |
-    //! |----------------|
-    //! |________________|
-
     //  Create 3D orientation widget
     ui->orientation_3d->setMinimumSize(QSize(400,400));
     ui->orientation_3d->setMaximumSize(screenSize);
     ui->orientation_3d->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     ui->orientation_3d->setFocusPolicy(Qt::StrongFocus);
-
-    //ui->firstVLayout->addWidget(logLine, 0, Qt::AlignBottom);
-
 
     //  Add second vertical layout with scatter plot, and all plot options
     ui->vLayout->addWidget(new QLabel(QStringLiteral("Magnetometer")));
@@ -180,16 +170,34 @@ void MainWindow::LoadSettings()
     ui->frameEndSep->setText(settings->value("channel/endChar","").toString());
 
     ui->channelNumber->setValue(settings->value("channel/numOfChannels","0").toInt());
+
+    //  Convert mask of enabled math channels
+    unsigned int mathChMask = settings->value("math/channelMask","0").toUInt();
+    if (mathChMask & (unsigned int)(1<<1))
+        ui->mathCh1en->setChecked(true);
+    if (mathChMask & (unsigned int)(1<<2))
+        ui->mathCh2en->setChecked(true);
+    if (mathChMask & (unsigned int)(1<<3))
+        ui->mathCh3en->setChecked(true);
+    if (mathChMask & (unsigned int)(1<<4))
+        ui->mathCh4en->setChecked(true);
+    if (mathChMask & (unsigned int)(1<<5))
+        ui->mathCh5en->setChecked(true);
+    if (mathChMask & (unsigned int)(1<<6))
+        ui->mathCh6en->setChecked(true);
+
+    //  Load number of math components
+    unsigned int mathComponentCount = settings->value("math/componentCount","0").toUInt();
+    for (uint8_t i = 0; i < mathComponentCount; i++)
+        on_addMathComp_clicked();
 }
 
 /**
- * @brief Cleanup and backup on exit
+ * @brief Cleanup and backup settings on exit
  * When exiting the window, save all settings and clean up
  */
 MainWindow::~MainWindow()
 {
-    //  Save settings before exiting
-
     //  Save port options
     settings->setValue("port/name", ui->portSelector->itemText(ui->portSelector->currentIndex()));
     settings->setValue("port/baud", ui->portBaud->itemText(ui->portBaud->currentIndex()));
@@ -203,6 +211,18 @@ MainWindow::~MainWindow()
         settings->setValue("channel/channel"+chID_str+"ID", ch[i]->GetId());
         settings->setValue("channel/channel"+chID_str+"name", ch[i]->GetName());
     }
+
+    //  Save math channels
+    for (uint8_t i = 0; i < mathComp.size(); i++)
+    {
+        QString id_str = QString::number(i);
+
+        settings->setValue("math/component"+id_str+"inCh", mathComp[i]->GetInCh());
+        settings->setValue("math/component"+id_str+"mathCh", mathComp[i]->GetMathCh());
+        settings->setValue("math/component"+id_str+"math", mathComp[i]->GetMath());
+    }
+    settings->setValue("math/componentCount", mathComp.size());
+
     settings->sync();
 
     ch.clear();
@@ -277,8 +297,8 @@ void MainWindow::on_channelNumber_valueChanged(int arg1)
 }
 
 /**
- * @brief Delete all elements in a layout
- * @param layout Layout to delete stuff from
+ * @brief Delete all elements in a layout provided in arguments
+ * @param layout Layout to delete objects from
  * @param deleteWidgets If true, delete widgets
  */
 void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
@@ -298,31 +318,34 @@ void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
 
 /**
  * @brief MainWindow::on_addMathComp_clicked
- * Add new math component
+ * Add new math component to the scroll list
  */
 void MainWindow::on_addMathComp_clicked()
 {
-    QString id = QString::number(mathComp.size());
-    MathChannelComponent *tmp = new MathChannelComponent();
-    QHBoxLayout *entry = new QHBoxLayout();
+    //  Convert current id to string for easier manipulation
+    QString id_str = QString::number(mathComp.size());
+    //  Construct component for channel math and push it in the vector
+    MathChannelComponent *tmp = new MathChannelComponent(mathComp.size());
+    mathComp.push_back(tmp);
 
-
-    tmp->SetInCh(settings->value("math/component"+id+"inCh","0").toInt());
-    tmp->SetMath(settings->value("math/component"+id+"mathCh","1").toInt());
-    tmp->SetMath(settings->value("math/component"+id+"math","0").toInt());
+    //  Add new component to the UI
+    ui->mathCompLayout->addLayout(tmp->GetLayout());
+    //  Update available math channels in the component
+    UpdateAvailMathCh();
+    //  Set values from settings, if exist, otherwise load defaults
+    tmp->SetInCh(settings->value("math/component"+id_str+"inCh","0").toInt());
+    tmp->SetMathCh(settings->value("math/component"+id_str+"mathCh","1").toInt());
+    tmp->SetMath(settings->value("math/component"+id_str+"math","0").toInt());
     //  0 - Add
     //  1 - Subtract
 
-    mathComp.push_back(tmp);
-    entry->addWidget(tmp->labels[0], 0, Qt::AlignLeft);
-    entry->addWidget(tmp->inChSelector, 0, Qt::AlignLeft);
-    entry->addWidget(tmp->labels[1], 0, Qt::AlignLeft);
-    entry->addWidget(tmp->mathChSelector, 0, Qt::AlignLeft);
-    entry->addWidget(tmp->labels[2], 0, Qt::AlignLeft);
-    entry->addWidget(tmp->mathSelector, 0, Qt::AlignLeft);
-    ui->mathCompLayout->addLayout(entry);
+    connect(tmp, &MathChannelComponent::deleteRequested, this, &MainWindow::on_delete_updateMathComp);
 }
 
+/**
+ * @brief Update a list of available math channels used by
+ *      math channel entries
+ */
 void MainWindow::UpdateAvailMathCh()
 {
     int mathCh[6] = {0};
@@ -341,15 +364,60 @@ void MainWindow::UpdateAvailMathCh()
     if (ui->mathCh6en->isChecked())
         mathCh[count++] = 6;
 
+    //  Collapse all enabled channels into a binary mask,
+    //  save mask into a config file
+    unsigned int mathChMask = 0;
+    for (uint8_t i = 0; i < 6; i ++)
+        mathChMask |= 1<<mathCh[i];
+
+    settings->setValue("math/channelMask", mathChMask);
+    settings->sync();
+
+    //  Go through exisitng fields in math components list and update
+    //  available math channels
     for (MathChannelComponent* X : mathComp)
-    {
         X->UpdateMathCh(mathCh, count);
-    }
 
 }
 
-void MainWindow::on_mathChXen_clicked()
+/**
+ * @brief Create new 3D orientation graph
+ */
+void MainWindow::on_add3D_clicked()
 {
+    OrientationWidget *tmp = new OrientationWidget();
+    tmp->setMinimumSize(QSize(200,200));
+    tmp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    UpdateAvailMathCh();
+    ui->mdiArea->addSubWindow(tmp);
+    tmp->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
+    tmp->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
+
+    tmp->parentWidget()->show();
+}
+
+/**
+ * @brief Slot function called by MathChannelComponent class when the delete
+ *  button has been pressed. It handles deletion in UI and cleanup in backend
+ * @param id ID of MathChannelComponent::_id to be deleted
+ */
+void MainWindow::on_delete_updateMathComp(int id)
+{
+    //  Math component got destroyed
+
+    //  Find component in vector
+    uint8_t i;
+    for (i = 0; i < mathComp.size(); i++)
+        if (mathComp[i]->GetID() == id)
+            break;
+    //  Clear UI elements
+    clearLayout(mathComp[i]->GetLayout());
+    //  Delete remainder
+    delete mathComp[i];
+    //  Remove the entry from vector
+    mathComp.erase(mathComp.begin()+i);
+
+    //  Update IDs of entries in the vector
+    for (i = 0; i < mathComp.size(); i++)
+        mathComp[i]->SetID(i);
 }

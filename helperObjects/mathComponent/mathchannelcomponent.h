@@ -16,7 +16,7 @@ class MathChannelComponent :  public QObject
     Q_OBJECT
 
 public:
-    MathChannelComponent(int id);
+    MathChannelComponent(uint8_t id);
     ~MathChannelComponent();
 
     void UpdateMathCh(int *mathCh, int size);
@@ -31,8 +31,8 @@ public:
     void SetMath(int math);
     int GetMath();
     //  ID of the component
-    void SetID(int id);
-    int  GetID();
+    void SetID(uint8_t id);
+    uint8_t  GetID();
 
     QHBoxLayout* GetLayout();
 
@@ -45,7 +45,7 @@ public:
     QSpacerItem *horSpacer;
 
 signals:
-    void deleteRequested(int id);
+    void deleteRequested(uint8_t id);
 private slots:
     void deleteComponent();
 private:

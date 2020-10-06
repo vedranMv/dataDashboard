@@ -14,7 +14,7 @@ MathChannelComponent::~MathChannelComponent()
     layout->deleteLater();
 }
 
-MathChannelComponent::MathChannelComponent(int id): _id(id)
+MathChannelComponent::MathChannelComponent(uint8_t id): _id(id)
 {
     labels[0] = new QLabel("Input channel");
     labels[1] = new QLabel("Math channel");
@@ -60,7 +60,7 @@ void MathChannelComponent::UpdateMathCh(int *mathCh, int size)
         mathChSelector->addItem(QString::number(mathCh[i]));
         //  Attempt to preserve selected channel, if it
         //  exists in the new list save it's index and
-        //  activate it afterwrds
+        //  activate it afterwards
         if (mathCh[i] == oldCh)
             index = i;
     }
@@ -113,7 +113,6 @@ int MathChannelComponent::GetMath()
 
 void MathChannelComponent::deleteComponent()
 {
-    //deleteLater();
     emit deleteRequested(_id);
 }
 
@@ -122,11 +121,11 @@ QHBoxLayout* MathChannelComponent::GetLayout()
     return layout;
 }
 
-void MathChannelComponent::SetID(int id)
+void MathChannelComponent::SetID(uint8_t id)
 {
     _id = id;
 }
-int  MathChannelComponent::GetID()
+uint8_t  MathChannelComponent::GetID()
 {
     return _id;
 }

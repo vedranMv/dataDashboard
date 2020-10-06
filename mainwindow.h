@@ -9,6 +9,7 @@
 #include <vector>
 
 #include <QTimer>
+#include <QCheckBox>
 #include <QSettings>
 
 namespace Ui {
@@ -45,7 +46,7 @@ private slots:
 
     void on_add3D_clicked();
 
-    void on_delete_updateMathComp(int id);
+    void on_delete_updateMathComp(uint8_t id);
 
 private:
     void LoadSettings();
@@ -55,10 +56,14 @@ private:
     SerialAdapter *dataAdapter;
 
     QSettings   *settings;
-    QLabel      *time;
     QTimer      *mainTimer;
+
+    //  Dynamically created/destroyed UI elements
     std::vector<Channel*>ch;
     std::vector<MathChannelComponent*>mathComp;
+
+    std::vector<QCheckBox*>mathChEnabled;
+    std::vector<QLineEdit*>mathChName;
 };
 
 #endif // MAINWINDOW_H

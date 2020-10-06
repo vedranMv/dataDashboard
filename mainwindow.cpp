@@ -23,8 +23,6 @@
 #include <QtGui/QScreen>
 #include <QtGui/QFontDatabase>
 
-//#include <QMdiSubWindow>
-
 #include <QSerialPortInfo>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -33,6 +31,20 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     //  Setup UI made in designer
     ui->setupUi(this);
+    //  Collect handles for checkboxes and names for math channels into arrays
+    mathChEnabled.push_back(ui->mathCh1en);
+    mathChEnabled.push_back(ui->mathCh2en);
+    mathChEnabled.push_back(ui->mathCh3en);
+    mathChEnabled.push_back(ui->mathCh4en);
+    mathChEnabled.push_back(ui->mathCh5en);
+    mathChEnabled.push_back(ui->mathCh6en);
+
+    mathChName.push_back(ui->mathCh1name);
+    mathChName.push_back(ui->mathCh2name);
+    mathChName.push_back(ui->mathCh3name);
+    mathChName.push_back(ui->mathCh4name);
+    mathChName.push_back(ui->mathCh5name);
+    mathChName.push_back(ui->mathCh6name);
 
     //  Initialize the variables
     dataAdapter = new SerialAdapter();
@@ -70,34 +82,30 @@ MainWindow::MainWindow(QWidget *parent) :
     //  Pushes data into the magnetometer scatter plot
     ScatterDataModifier *modifier = new ScatterDataModifier(graph);
 
-    //  Configure parameters for serial port
+    /**
+     * Configure parameters for serial port
+     */
     // Port selector
-    //portSelector = new QComboBox();
     const auto infos = QSerialPortInfo::availablePorts();
     for (const QSerialPortInfo &info : infos)
         ui->portSelector->addItem(info.portName());
     //  Port baud
-
     ui->portBaud->addItem("1000000");
     ui->portBaud->addItem("115200");
     ui->portBaud->addItem("9600");
     ui->portBaud->setCurrentIndex(1);
 
-
+    // 'Connect' button opens serial port connection
     QObject::connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::toggleConnection);
-
+    //  Serial adapter objects logs data into a MainWindow logger
     QObject::connect(dataAdapter, &SerialAdapter::error, this, &MainWindow::LogLine);
 
     //  Connect channel enable signals to slot
-    QObject::connect(ui->mathCh1en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
-    QObject::connect(ui->mathCh2en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
-    QObject::connect(ui->mathCh3en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
-    QObject::connect(ui->mathCh4en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
-    QObject::connect(ui->mathCh5en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
-    QObject::connect(ui->mathCh6en, &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
+    for (uint8_t i = 0; i < mathChEnabled.size(); i++)
+        QObject::connect(mathChEnabled[i], &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
 
     //TODO: Add data bits, parity and flow control fields
-    //  For now assume 8bits, no pariy, no flow control, 1 stop bit
+    //  For now assume 8bits, no parity, no flow control, 1 stop bit
     //  Connect/disconnect button
     LogLine("Start-up completed, loading settings...");
     LoadSettings();
@@ -109,8 +117,80 @@ MainWindow::MainWindow(QWidget *parent) :
 }
 
 /**
- * @brief Trigger refresh of various UI elementes
- * Usually called periodically ever 1s from a main timer
+ * @brief Clean up and backup settings on exit
+ * When exiting the window, save all settings and clean up
+ */
+MainWindow::~MainWindow()
+{
+    //  Save port options
+    settings->setValue("port/name", ui->portSelector->itemText(ui->portSelector->currentIndex()));
+    settings->setValue("port/baud", ui->portBaud->itemText(ui->portBaud->currentIndex()));
+
+
+    //  Save channel settings
+    for (uint8_t i = 0; i < ch.size(); i++)
+    {
+        QString chID_str =  QString::number(i);
+
+        settings->setValue("channel/channel"+chID_str+"ID", ch[i]->GetId());
+        settings->setValue("channel/channel"+chID_str+"name", ch[i]->GetName());
+    }
+
+    //  Save math channels
+    for (uint8_t i = 0; i < mathComp.size(); i++)
+    {
+        QString id_str = QString::number(i);
+
+        settings->setValue("math/component"+id_str+"inCh", mathComp[i]->GetInCh());
+        settings->setValue("math/component"+id_str+"mathCh", mathComp[i]->GetMathCh());
+        settings->setValue("math/component"+id_str+"math", mathComp[i]->GetMath());
+    }
+    settings->setValue("math/componentCount", mathComp.size());
+
+    //  Save math channel labels
+    for (uint8_t i = 0; i < mathChEnabled.size(); i++)
+        if (mathChEnabled[i]->isEnabled())
+            settings->setValue("math/channel"+QString::number(i+1)+"name",mathChName[i]->text());
+
+
+    settings->sync();
+
+    ch.clear();
+
+    delete ui;
+}
+
+/**
+ * @brief Load settings from the configuration file
+ */
+void MainWindow::LoadSettings()
+{
+    settings = new QSettings(QString("config.ini"), QSettings::IniFormat);
+
+    //  Data frame settings
+    ui->frameStartCh->setText(settings->value("channel/startChar","").toString());
+    ui->frameChSeparator->setText(settings->value("channel/separator","").toString());
+    ui->frameEndSep->setText(settings->value("channel/endChar","").toString());
+    //  Number of data channels
+    ui->channelNumber->setValue(settings->value("channel/numOfChannels","0").toInt());
+
+    //  Read mask of enabled math channels and apply UI changes
+    unsigned int mathChMask = settings->value("math/channelMask","0").toUInt();
+    for (uint8_t i = 0; i < mathChEnabled.size(); i++)
+        if ( mathChMask & (unsigned int)(1<<(i+1)) )
+        {
+            mathChEnabled[i]->setChecked(true);
+        }
+
+    //  Load number of math components
+    unsigned int mathComponentCount = settings->value("math/componentCount","0").toUInt();
+    for (uint8_t i = 0; i < mathComponentCount; i++)
+        on_addMathComp_clicked();
+}
+
+/**
+ * @brief Trigger refresh of various UI elements
+ * Usually called periodically every 1s from a main timer
  */
 void MainWindow::refreshUI()
 {
@@ -158,80 +238,9 @@ void MainWindow::LogLine(const QString &line)
     //TODO: Log into a text file as well
 }
 
-/**
- * @brief Load settings from the .ini file
- */
-void MainWindow::LoadSettings()
-{
-    settings = new QSettings(QString("config.ini"), QSettings::IniFormat);
-
-    ui->frameStartCh->setText(settings->value("channel/startChar","").toString());
-    ui->frameChSeparator->setText(settings->value("channel/separator","").toString());
-    ui->frameEndSep->setText(settings->value("channel/endChar","").toString());
-
-    ui->channelNumber->setValue(settings->value("channel/numOfChannels","0").toInt());
-
-    //  Convert mask of enabled math channels
-    unsigned int mathChMask = settings->value("math/channelMask","0").toUInt();
-    if (mathChMask & (unsigned int)(1<<1))
-        ui->mathCh1en->setChecked(true);
-    if (mathChMask & (unsigned int)(1<<2))
-        ui->mathCh2en->setChecked(true);
-    if (mathChMask & (unsigned int)(1<<3))
-        ui->mathCh3en->setChecked(true);
-    if (mathChMask & (unsigned int)(1<<4))
-        ui->mathCh4en->setChecked(true);
-    if (mathChMask & (unsigned int)(1<<5))
-        ui->mathCh5en->setChecked(true);
-    if (mathChMask & (unsigned int)(1<<6))
-        ui->mathCh6en->setChecked(true);
-
-    //  Load number of math components
-    unsigned int mathComponentCount = settings->value("math/componentCount","0").toUInt();
-    for (uint8_t i = 0; i < mathComponentCount; i++)
-        on_addMathComp_clicked();
-}
 
 /**
- * @brief Cleanup and backup settings on exit
- * When exiting the window, save all settings and clean up
- */
-MainWindow::~MainWindow()
-{
-    //  Save port options
-    settings->setValue("port/name", ui->portSelector->itemText(ui->portSelector->currentIndex()));
-    settings->setValue("port/baud", ui->portBaud->itemText(ui->portBaud->currentIndex()));
-
-
-    //  Save channel settings
-    for (uint8_t i = 0; i < ch.size(); i++)
-    {
-        QString chID_str =  QString::number(i);
-
-        settings->setValue("channel/channel"+chID_str+"ID", ch[i]->GetId());
-        settings->setValue("channel/channel"+chID_str+"name", ch[i]->GetName());
-    }
-
-    //  Save math channels
-    for (uint8_t i = 0; i < mathComp.size(); i++)
-    {
-        QString id_str = QString::number(i);
-
-        settings->setValue("math/component"+id_str+"inCh", mathComp[i]->GetInCh());
-        settings->setValue("math/component"+id_str+"mathCh", mathComp[i]->GetMathCh());
-        settings->setValue("math/component"+id_str+"math", mathComp[i]->GetMath());
-    }
-    settings->setValue("math/componentCount", mathComp.size());
-
-    settings->sync();
-
-    ch.clear();
-
-    delete ui;
-}
-
-/**
- * @brief Save starting character as soon as it's edited
+ * @brief [Slot function] Save starting character as soon as it's edited
  */
 void MainWindow::on_frameStartCh_editingFinished()
 {
@@ -239,7 +248,7 @@ void MainWindow::on_frameStartCh_editingFinished()
     settings->sync();
 }
 /**
- * @brief Save channel separator character as soon as it's edited
+ * @brief [Slot function] Save channel separator character as soon as it's edited
  */
 void MainWindow::on_frameChSeparator_editingFinished()
 {
@@ -247,7 +256,7 @@ void MainWindow::on_frameChSeparator_editingFinished()
     settings->sync();
 }
 /**
- * @brief Save ending character as soon as it's edited
+ * @brief [Slot function] Save ending character as soon as it's edited
  */
 void MainWindow::on_frameEndSep_editingFinished()
 {
@@ -256,7 +265,7 @@ void MainWindow::on_frameEndSep_editingFinished()
 }
 
 /**
- * @brief Handles dynamic construction of data channels
+ * @brief [Slot function] Handles dynamic construction of data channels
  * When called, it destroys all existing channel entries, and constructs
  * a number of new ones corresponding to the argument.
  * At the same time, number of channels is saved into a config file,
@@ -316,16 +325,21 @@ void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
     }
 }
 
+///////////////////////////////////////////////////////////////////////////////
+////
+///     Math components UI manipulations
+///
+///////////////////////////////////////////////////////////////////////////////
+
 /**
- * @brief MainWindow::on_addMathComp_clicked
- * Add new math component to the scroll list
+ * @brief [Slot function] Add new math component to the scroll list
  */
 void MainWindow::on_addMathComp_clicked()
 {
     //  Convert current id to string for easier manipulation
     QString id_str = QString::number(mathComp.size());
     //  Construct component for channel math and push it in the vector
-    MathChannelComponent *tmp = new MathChannelComponent(mathComp.size());
+    MathChannelComponent *tmp = new MathChannelComponent((uint8_t)mathComp.size());
     mathComp.push_back(tmp);
 
     //  Add new component to the UI
@@ -343,37 +357,42 @@ void MainWindow::on_addMathComp_clicked()
 }
 
 /**
- * @brief Update a list of available math channels used by
+ * @brief [Slot function] Update a list of available math channels used by
  *      math channel entries
  */
 void MainWindow::UpdateAvailMathCh()
 {
+    //  List of channels currently enabled, to be passed to QComboBoxes
+    //  in math components list
     int mathCh[6] = {0};
     int count = 0;
-
-    if (ui->mathCh1en->isChecked())
-        mathCh[count++] = 1;
-    if (ui->mathCh2en->isChecked())
-        mathCh[count++] = 2;
-    if (ui->mathCh3en->isChecked())
-        mathCh[count++] = 3;
-    if (ui->mathCh4en->isChecked())
-        mathCh[count++] = 4;
-    if (ui->mathCh5en->isChecked())
-        mathCh[count++] = 5;
-    if (ui->mathCh6en->isChecked())
-        mathCh[count++] = 6;
 
     //  Collapse all enabled channels into a binary mask,
     //  save mask into a config file
     unsigned int mathChMask = 0;
-    for (uint8_t i = 0; i < 6; i ++)
-        mathChMask |= 1<<mathCh[i];
 
+    //  Loop through all QCheckBox elements and configure UI look based on
+    //  whether they are checked or not
+    for (uint8_t i = 0; i < mathChEnabled.size(); i++)
+    {
+        QString id_str = QString::number(i+1);
+        if (mathChEnabled[i]->isChecked())
+        {
+            mathCh[count++] = (i+1);
+            mathChMask |= 1 << (i+1);
+            mathChName[i]->setEnabled(true);
+            //  Load channel name from settings, if it exists
+            mathChName[i]->setText(settings->value("math/channel"+id_str+"name","Math "+id_str).toString());
+        }
+        else
+            mathChName[i]->setEnabled(false);
+    }
+
+    //  Save channel mask
     settings->setValue("math/channelMask", mathChMask);
     settings->sync();
 
-    //  Go through exisitng fields in math components list and update
+    //  Go through existing math components list and update QComboBox with new
     //  available math channels
     for (MathChannelComponent* X : mathComp)
         X->UpdateMathCh(mathCh, count);
@@ -381,27 +400,11 @@ void MainWindow::UpdateAvailMathCh()
 }
 
 /**
- * @brief Create new 3D orientation graph
- */
-void MainWindow::on_add3D_clicked()
-{
-    OrientationWidget *tmp = new OrientationWidget();
-    tmp->setMinimumSize(QSize(200,200));
-    tmp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    ui->mdiArea->addSubWindow(tmp);
-    tmp->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
-    tmp->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
-
-    tmp->parentWidget()->show();
-}
-
-/**
- * @brief Slot function called by MathChannelComponent class when the delete
- *  button has been pressed. It handles deletion in UI and cleanup in backend
+ * @brief [Slot function] Called by MathChannelComponent class when the delete
+ *  button has been pressed. It handles deletion in UI and clean up in backend
  * @param id ID of MathChannelComponent::_id to be deleted
  */
-void MainWindow::on_delete_updateMathComp(int id)
+void MainWindow::on_delete_updateMathComp(uint8_t id)
 {
     //  Math component got destroyed
 
@@ -420,4 +423,26 @@ void MainWindow::on_delete_updateMathComp(int id)
     //  Update IDs of entries in the vector
     for (i = 0; i < mathComp.size(); i++)
         mathComp[i]->SetID(i);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+////
+///     Dynamic creation of graphs
+///
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @brief Create new 3D orientation graph
+ */
+void MainWindow::on_add3D_clicked()
+{
+    OrientationWidget *tmp = new OrientationWidget();
+    tmp->setMinimumSize(QSize(200,200));
+    tmp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    ui->mdiArea->addSubWindow(tmp);
+    tmp->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
+    tmp->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
+
+    tmp->parentWidget()->show();
 }

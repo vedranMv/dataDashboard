@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>600</width>
-    <height>420</height>
+    <height>473</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,45 +20,79 @@
       <enum>QTabWidget::West</enum>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>1</number>
      </property>
-     <widget class="QWidget" name="dashboardTab">
+     <property name="movable">
+      <bool>false</bool>
+     </property>
+     <widget class="QWidget" name="fluidUI">
       <attribute name="title">
        <string>Dashboard</string>
       </attribute>
-      <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <layout class="QVBoxLayout" name="verticalLayout_8">
        <item>
-        <layout class="QVBoxLayout" name="firstVLayout">
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
          <item>
-          <widget class="QLabel" name="label_7">
+          <widget class="QPushButton" name="add3D">
            <property name="text">
-            <string>3D orientation</string>
+            <string>Add 3D</string>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="OrientationWidget" name="orientation_3d" native="true"/>
+          <widget class="QPushButton" name="addScatter">
+           <property name="text">
+            <string>Add scatter</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="addLine">
+           <property name="text">
+            <string>Add line</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
          </item>
         </layout>
        </item>
        <item>
-        <spacer name="horizontalSpacer">
+        <spacer name="verticalSpacer_3">
          <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-         <property name="sizeType">
-          <enum>QSizePolicy::Fixed</enum>
+          <enum>Qt::Vertical</enum>
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>10</width>
-           <height>20</height>
+           <width>20</width>
+           <height>40</height>
           </size>
          </property>
         </spacer>
        </item>
        <item>
-        <layout class="QVBoxLayout" name="vLayout"/>
+        <widget class="QMdiArea" name="mdiArea">
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <property name="viewMode">
+          <enum>QMdiArea::SubWindowView</enum>
+         </property>
+         <property name="tabsClosable">
+          <bool>false</bool>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -265,7 +299,7 @@
                    <x>0</x>
                    <y>0</y>
                    <width>248</width>
-                   <height>83</height>
+                   <height>110</height>
                   </rect>
                  </property>
                  <layout class="QVBoxLayout" name="verticalLayout_5">
@@ -503,77 +537,6 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="fluidUI">
-      <attribute name="title">
-       <string>Fluid UI</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_8">
-       <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_8">
-         <item>
-          <widget class="QPushButton" name="add3D">
-           <property name="text">
-            <string>Add 3D</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="addScatter">
-           <property name="text">
-            <string>Add scatter</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="addLine">
-           <property name="text">
-            <string>Add line</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer_6">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_3">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item>
-        <widget class="QMdiArea" name="mdiArea">
-         <property name="frameShadow">
-          <enum>QFrame::Raised</enum>
-         </property>
-         <property name="viewMode">
-          <enum>QMdiArea::SubWindowView</enum>
-         </property>
-         <property name="tabsClosable">
-          <bool>false</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
     </widget>
    </item>
    <item>
@@ -619,14 +582,6 @@
    </item>
   </layout>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>OrientationWidget</class>
-   <extends>QWidget</extends>
-   <header>orientation_3d/orientationwidget.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

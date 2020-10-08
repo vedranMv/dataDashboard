@@ -46,6 +46,9 @@ MathChannelComponent::MathChannelComponent(uint8_t id): _id(id)
     layout->addSpacerItem(horSpacer);
     layout->addWidget(deleteButton, 0, Qt::AlignLeft);
 
+    for (int i = 0; i < 6; i++)
+        mathChSelector->addItem(QString::number(i));
+
     QObject::connect(deleteButton, &QPushButton::pressed, this, &MathChannelComponent::deleteComponent);
 }
 

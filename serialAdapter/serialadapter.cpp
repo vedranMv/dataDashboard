@@ -74,7 +74,10 @@ void SerialAdapter::startThread()
 
     //  Check if the thread is already running, if not start it
     if (!isRunning())
+    {
+        threadQuit = false;
         start();
+    }
     else
         m_cond.wakeOne();
 }
@@ -110,6 +113,8 @@ void SerialAdapter::run()
         return;
     }
 
+    portUpdated = true;
+
     while (!threadQuit)
     {
         //  Check if port name changed while running
@@ -141,4 +146,5 @@ void SerialAdapter::run()
         }
     }
     serial.close();
+    threadQuit = false;
 }

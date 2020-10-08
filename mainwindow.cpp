@@ -49,13 +49,18 @@ MainWindow::MainWindow(QWidget *parent) :
     //  Initialize the variables
     dataAdapter = new SerialAdapter();
     mainTimer = new QTimer();
+    mux = new DataMultiplexer();
 
+    //void response(const QString &s);
+    connect(dataAdapter, &SerialAdapter::response, mux, &DataMultiplexer::ReceiveSerialData);
+    connect(mux, &DataMultiplexer::error, this, &MainWindow::LogLine);
     LogLine("Starting up..");
 
-    //  Create magnetometer scatter plot
+    /**
+      * Check presence of OpenGL drivers
+      */
+    //  Create a 3D plot
     Q3DScatter *graph = new Q3DScatter();
-    QWidget *container = QWidget::createWindowContainer(graph);
-
     //  Check that OpenGL exists
     if (!graph->hasContext()) {
         QMessageBox msgBox;
@@ -63,24 +68,7 @@ MainWindow::MainWindow(QWidget *parent) :
         msgBox.exec();
         return;
     }
-    //  Configure size policy for the magnetometer data
-    QSize screenSize = graph->screen()->size();
-    container->setMinimumSize(QSize(400,400));
-    container->setMaximumSize(screenSize/4);
-    container->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    //  Create 3D orientation widget
-    ui->orientation_3d->setMinimumSize(QSize(400,400));
-    ui->orientation_3d->setMaximumSize(screenSize);
-    ui->orientation_3d->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    ui->orientation_3d->setFocusPolicy(Qt::StrongFocus);
-
-    //  Add second vertical layout with scatter plot, and all plot options
-    ui->vLayout->addWidget(new QLabel(QStringLiteral("Magnetometer")));
-    ui->vLayout->addWidget(container, 0, Qt::AlignTop);
-
-    //  Pushes data into the magnetometer scatter plot
-    ScatterDataModifier *modifier = new ScatterDataModifier(graph);
+    delete graph;
 
     /**
      * Configure parameters for serial port
@@ -114,6 +102,8 @@ MainWindow::MainWindow(QWidget *parent) :
     mainTimer->setInterval(1000);
     QObject::connect(mainTimer, &QTimer::timeout, this, &MainWindow::refreshUI);
     mainTimer->start();
+
+
 }
 
 /**
@@ -141,6 +131,7 @@ MainWindow::~MainWindow()
     {
         QString id_str = QString::number(i);
 
+
         settings->setValue("math/component"+id_str+"inCh", mathComp[i]->GetInCh());
         settings->setValue("math/component"+id_str+"mathCh", mathComp[i]->GetMathCh());
         settings->setValue("math/component"+id_str+"math", mathComp[i]->GetMath());
@@ -149,7 +140,7 @@ MainWindow::~MainWindow()
 
     //  Save math channel labels
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
-        if (mathChEnabled[i]->isEnabled())
+        if (mathChEnabled[i]->isChecked())
             settings->setValue("math/channel"+QString::number(i+1)+"name",mathChName[i]->text());
 
 
@@ -175,15 +166,15 @@ void MainWindow::LoadSettings()
     ui->channelNumber->setValue(settings->value("channel/numOfChannels","0").toInt());
 
     //  Read mask of enabled math channels and apply UI changes
-    unsigned int mathChMask = settings->value("math/channelMask","0").toUInt();
+    uint8_t mathChMask = settings->value("math/channelMask","0").toUInt();
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
-        if ( mathChMask & (unsigned int)(1<<(i+1)) )
+        if ( mathChMask & (uint8_t)(1<<(i+1)) )
         {
             mathChEnabled[i]->setChecked(true);
         }
 
     //  Load number of math components
-    unsigned int mathComponentCount = settings->value("math/componentCount","0").toUInt();
+    uint8_t mathComponentCount = settings->value("math/componentCount","0").toUInt();
     for (uint8_t i = 0; i < mathComponentCount; i++)
         on_addMathComp_clicked();
 }
@@ -206,6 +197,21 @@ void MainWindow::toggleConnection()
 
     if (ui->connectButton->text() == "Connect")
     {
+        //  Update frame information in MUX
+        mux->SetSerialFrameFormat(ui->frameStartCh->text()[0].cell(), \
+                ui->frameChSeparator->text()[0].cell(), \
+                ui->frameEndSep->text()[0].cell());
+
+
+        QString *chLabels = new QString[ch.size()];
+
+        for (uint8_t i = 0; i < ch.size(); i++)
+        {
+            chLabels[i] = ch[i]->GetLabel();
+        }
+        mux->SetSerialDataLabels(ch.size(), chLabels);
+        delete[] chLabels;
+
         dataAdapter->updatePort(ui->portSelector->itemText(ui->portSelector->currentIndex()), \
                                 ui->portBaud->itemText(ui->portBaud->currentIndex()));
         ui->portSelector->setEnabled(false);
@@ -290,8 +296,8 @@ void MainWindow::on_channelNumber_valueChanged(int arg1)
         QHBoxLayout *entry = new QHBoxLayout();
 
         //  Extract settings for this channel from config file, if existing
-        int chID = settings->value("channel/channel"+chID_str+"ID","0").toInt();
-        QString chName = settings->value("channel/channel" + chID_str + "name","").toString();
+        int chID = settings->value("channel/channel"+chID_str+"ID", chID_str).toInt();
+        QString chName = settings->value("channel/channel" + chID_str + "name","Serial "+ chID_str).toString();
 
         //  Construct UI elements for channel configuration
         Channel *tmp = new Channel("Channel " + chID_str, chID, chName);
@@ -303,6 +309,13 @@ void MainWindow::on_channelNumber_valueChanged(int arg1)
         entry->addWidget(tmp->channelName, 0, Qt::AlignLeft);
         ui->channelList->addLayout(entry);
     }
+
+    //  Update MUX settings
+
+
+    //  Register channels
+
+    //  Update serial frame info
 }
 
 /**
@@ -331,6 +344,29 @@ void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
+void MainWindow::RegisterMathChannel(uint8_t chID)
+{
+    //  TODO: Dirty initialization, make the array size dynamic
+    uint8_t count = 0;
+    uint8_t operations[20], serialChannels[20];
+
+    //  Look up all the components of this channel ID
+    for (MathChannelComponent *X : mathComp)
+    {
+        //  T
+        if (X->GetMathCh() == (chID))
+        {
+            serialChannels[count] = X->GetInCh();
+            operations[count] = X->GetMath();
+            count++;
+            if (count >= 20) break;
+        }
+    }
+
+    mux->RegisterMathChannel(chID, mathChName[chID-1]->text(), \
+                             operations, serialChannels, count);
+}
+
 /**
  * @brief [Slot function] Add new math component to the scroll list
  */
@@ -352,8 +388,8 @@ void MainWindow::on_addMathComp_clicked()
     tmp->SetMath(settings->value("math/component"+id_str+"math","0").toInt());
     //  0 - Add
     //  1 - Subtract
-
-    connect(tmp, &MathChannelComponent::deleteRequested, this, &MainWindow::on_delete_updateMathComp);
+    connect(tmp, &MathChannelComponent::deleteRequested, \
+            this, &MainWindow::on_delete_updateMathComp);
 }
 
 /**
@@ -369,33 +405,49 @@ void MainWindow::UpdateAvailMathCh()
 
     //  Collapse all enabled channels into a binary mask,
     //  save mask into a config file
-    unsigned int mathChMask = 0;
+    static uint8_t  chMask = 0;
 
     //  Loop through all QCheckBox elements and configure UI look based on
     //  whether they are checked or not
+
+
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
     {
         QString id_str = QString::number(i+1);
         if (mathChEnabled[i]->isChecked())
         {
             mathCh[count++] = (i+1);
-            mathChMask |= 1 << (i+1);
             mathChName[i]->setEnabled(true);
             //  Load channel name from settings, if it exists
             mathChName[i]->setText(settings->value("math/channel"+id_str+"name","Math "+id_str).toString());
         }
         else
             mathChName[i]->setEnabled(false);
+
+        //  If it's enabled, but it wasn't in the last call
+        if (mathChEnabled[i]->isChecked() && !(((1<<(i+1)) & chMask) > 0))
+        {
+            qDebug() << "Enabling channel " << (i+1) << QString::number(chMask);
+            chMask |= (1<<(i+1));
+            RegisterMathChannel(i+1);
+        }
+        //  If it's disabled, but it was enabled in the last call
+        else if (!mathChEnabled[i]->isChecked() && (((1<<(i+1)) & chMask) > 0))
+        {
+            chMask &= ~(1<<(i+1));
+            mux->UnegisterMathChannel(i+1);
+            qDebug() << "Disabling channel " << (i+1) << QString::number(chMask);;
+        }
     }
 
     //  Save channel mask
-    settings->setValue("math/channelMask", mathChMask);
+    settings->setValue("math/channelMask", chMask);
     settings->sync();
 
     //  Go through existing math components list and update QComboBox with new
     //  available math channels
-    for (MathChannelComponent* X : mathComp)
-        X->UpdateMathCh(mathCh, count);
+//    for (MathChannelComponent* X : mathComp)
+//        X->UpdateMathCh(mathCh, count);
 
 }
 
@@ -425,6 +477,8 @@ void MainWindow::on_delete_updateMathComp(uint8_t id)
         mathComp[i]->SetID(i);
 }
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
 ////
 ///     Dynamic creation of graphs
@@ -446,3 +500,24 @@ void MainWindow::on_add3D_clicked()
 
     tmp->parentWidget()->show();
 }
+
+void MainWindow::on_addScatter_clicked()
+{
+    //  Create magnetometer scatter plot
+    Q3DScatter *graph = new Q3DScatter();
+    QWidget *tmp = QWidget::createWindowContainer(graph);
+
+    //  Pushes data into the magnetometer scatter plot
+    ScatterDataModifier *modifier = new ScatterDataModifier(graph);
+
+    tmp->setMinimumSize(QSize(200,200));
+    tmp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    ui->mdiArea->addSubWindow(tmp);
+    tmp->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
+    tmp->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
+
+    tmp->parentWidget()->show();
+    //TODO: Closing this window crashes application
+}
+

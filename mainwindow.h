@@ -5,6 +5,7 @@
 #include "serialAdapter/serialadapter.h"
 #include "helperObjects/channel/channel.h"
 #include "helperObjects/mathComponent/mathchannelcomponent.h"
+#include "helperObjects/dataMultiplexer/datamultiplexer.h"
 #include <QLabel>
 #include <vector>
 
@@ -32,6 +33,7 @@ public Q_SLOTS:
 
 public slots:
     void UpdateAvailMathCh();
+    void on_delete_updateMathComp(uint8_t id);
 
 private slots:
     void on_frameStartCh_editingFinished();
@@ -46,17 +48,19 @@ private slots:
 
     void on_add3D_clicked();
 
-    void on_delete_updateMathComp(uint8_t id);
+    void on_addScatter_clicked();
 
 private:
     void LoadSettings();
     void clearLayout(QLayout* layout, bool deleteWidgets = true);
+    void RegisterMathChannel(uint8_t chID);
 
     Ui::MainWindow *ui;
     SerialAdapter *dataAdapter;
 
     QSettings   *settings;
     QTimer      *mainTimer;
+    DataMultiplexer *mux;
 
     //  Dynamically created/destroyed UI elements
     std::vector<Channel*>ch;

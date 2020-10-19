@@ -55,6 +55,8 @@
 #include <QThread>
 #include <QWaitCondition>
 
+#include "helperObjects/dataMultiplexer/datamultiplexer.h"
+
 //! [0]
 class SerialAdapter : public QThread
 {
@@ -66,6 +68,8 @@ public:
 
     void startThread();
     void stopThread();
+
+    void RegisterMux(DataMultiplexer* mux);
 
 signals:
     void response(const QString &s);
@@ -84,6 +88,7 @@ private:
     QWaitCondition m_cond;
     bool threadQuit = false;
     bool portUpdated = false;
+    DataMultiplexer* _mux;
 };
 //! [0]
 

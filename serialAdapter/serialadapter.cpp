@@ -134,17 +134,23 @@ void SerialAdapter::run()
         }
 
         // Read response
-        if (serial.waitForReadyRead(10))
+        if (serial.waitForReadyRead(1))
         {
             QByteArray responseData = serial.readAll();
-            while (serial.waitForReadyRead(10))
+            while (serial.waitForReadyRead(1))
                 responseData += serial.readAll();
 
             const QString response = QString::fromUtf8(responseData);
 
-            emit this->response(response);
+            //emit this->response(response);
+            _mux->ReceiveSerialData(response);
         }
     }
     serial.close();
     threadQuit = false;
+}
+
+void SerialAdapter::RegisterMux(DataMultiplexer* mux)
+{
+    _mux = mux;
 }

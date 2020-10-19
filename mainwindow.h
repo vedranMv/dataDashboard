@@ -27,7 +27,7 @@ public:
 
 
 public Q_SLOTS:
-    void LogLine(const QString &line);
+    void logLine(const QString &line);
     void toggleConnection();
     void refreshUI();
 
@@ -64,7 +64,7 @@ private:
 
     //  Dynamically created/destroyed UI elements
     std::vector<Channel*>ch;
-    std::vector<MathChannelComponent*>mathComp;
+    std::vector<UIMathChannelComponent*>mathComp;
 
     std::vector<QCheckBox*>mathChEnabled;
     std::vector<QLineEdit*>mathChName;

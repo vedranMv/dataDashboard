@@ -21,6 +21,7 @@ INSTALLS += target
 SOURCES += main.cpp scatter/scatterdatamodifier.cpp \
         helperObjects/channel/channel.cpp \
         helperObjects/dataMultiplexer/datamultiplexer.cpp \
+        helperObjects/graphHeaderWidget/graphheaderwidget.cpp \
         helperObjects/mathComponent/mathchannelcomponent.cpp \
         mainwindow.cpp \
         orientation_3d/orientationwidget.cpp \
@@ -31,6 +32,7 @@ SOURCES += main.cpp scatter/scatterdatamodifier.cpp \
 HEADERS += scatter/scatterdatamodifier.h \
     helperObjects/channel/channel.h \
     helperObjects/dataMultiplexer/datamultiplexer.h \
+    helperObjects/graphHeaderWidget/graphheaderwidget.h \
     helperObjects/mathComponent/mathchannelcomponent.h \
     mainwindow.h \
            scatter/ScatterDataPlot.h \

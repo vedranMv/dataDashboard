@@ -58,13 +58,14 @@
 #include <QMatrix4x4>
 #include <QQuaternion>
 #include <QVector2D>
-#include <QBasicTimer>
+#include <QSemaphore>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
+#include <QThread>
 
 class GeometryEngine;
 
-class OrientationWidget : public QOpenGLWidget, protected QOpenGLFunctions
+class OrientationWidget : public QOpenGLWidget, public QOpenGLFunctions
 {
     Q_OBJECT
 
@@ -72,11 +73,34 @@ public:
     using QOpenGLWidget::QOpenGLWidget;
     ~OrientationWidget();
 
-protected:
-    void mousePressEvent(QMouseEvent *e) override;
-    void mouseReleaseEvent(QMouseEvent *e) override;
-    void timerEvent(QTimerEvent *e) override;
+     QQuaternion rotation;
 
+     void ReceiveData(double *data, uint8_t n)
+     {
+         if (n < _maxInChannel)
+             return;
+
+         // Update rotation
+        rotation = QQuaternion::fromEulerAngles(-(float)data[_inputChannels[0]],
+                                                (float)data[_inputChannels[1]],
+                                                (float)data[_inputChannels[2]]);
+        update();
+     }
+
+public slots:
+     void UpdateInputChannels(uint8_t *inChannels)
+     {
+        _inputChannels[0] = inChannels[0];
+        _inputChannels[1] = inChannels[1];
+        _inputChannels[2] = inChannels[2];
+
+       _maxInChannel = 0;
+       for (uint8_t i = 0; i < 3; i++)
+           if (inChannels[i] > _maxInChannel)
+               _maxInChannel = inChannels[i];
+     }
+
+protected:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
@@ -85,18 +109,17 @@ protected:
     void initTextures();
 
 private:
-    QBasicTimer timer;
+
     QOpenGLShaderProgram program;
     GeometryEngine *geometries = nullptr;
 
     QOpenGLTexture *texture = nullptr;
 
     QMatrix4x4 projection;
-
-    QVector2D mousePressPosition;
-    QVector3D rotationAxis;
-    qreal angularSpeed = 0;
-    QQuaternion rotation;
+    uint8_t _inputChannels[3];
+    uint8_t _maxInChannel;
 };
+
+
 
 #endif // ORIENTATIONWIDGET_H

@@ -49,67 +49,28 @@
 ****************************************************************************/
 
 #include "orientationwidget.h"
+#include "helperObjects/dataMultiplexer/datamultiplexer.h"
 
 #include <QMouseEvent>
 #include <QPainter>
 
 #include <cmath>
 
+
+
 OrientationWidget::~OrientationWidget()
 {
+//    if (isRunning())
+//        stop();
     // Make sure the context is current when deleting the texture
     // and the buffers.
+    DataMultiplexer::GetI().UnregisterGraph(this);
     makeCurrent();
     delete texture;
     delete geometries;
     doneCurrent();
 }
 
-//! [0]
-void OrientationWidget::mousePressEvent(QMouseEvent *e)
-{
-    // Save mouse press position
-    mousePressPosition = QVector2D(e->localPos());
-}
-
-void OrientationWidget::mouseReleaseEvent(QMouseEvent *e)
-{
-    // Mouse release position - mouse press position
-    QVector2D diff = QVector2D(e->localPos()) - mousePressPosition;
-
-    // Rotation axis is perpendicular to the mouse position difference
-    // vector
-    QVector3D n = QVector3D(diff.y(), diff.x(), 0.0).normalized();
-
-    // Accelerate angular speed relative to the length of the mouse sweep
-    qreal acc = diff.length() / 100.0;
-
-    // Calculate new rotation axis as weighted sum
-    rotationAxis = (rotationAxis * angularSpeed + n * acc).normalized();
-
-    // Increase angular speed
-    angularSpeed += acc;
-}
-//! [0]
-
-//! [1]
-void OrientationWidget::timerEvent(QTimerEvent *)
-{
-    // Decrease angular speed (friction)
-    angularSpeed *= 0.99;
-
-    // Stop rotation when speed goes below threshold
-    if (angularSpeed < 0.01) {
-        angularSpeed = 0.0;
-    } else {
-        // Update rotation
-        rotation = QQuaternion::fromAxisAndAngle(rotationAxis, angularSpeed) * rotation;
-
-        // Request an update
-        update();
-    }
-}
-//! [1]
 
 void OrientationWidget::initializeGL()
 {
@@ -129,9 +90,7 @@ void OrientationWidget::initializeGL()
 //! [2]
 
     geometries = new GeometryEngine;
-
-    // Use QBasicTimer because its faster than QTimer
-    timer.start(12, this);
+    update();
 }
 
 //! [3]

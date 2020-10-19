@@ -4,11 +4,12 @@
 
 #include "scatter/scatterdatamodifier.h"
 #include "orientation_3d/orientationwidget.h"
+#include "helperObjects/graphHeaderWidget/graphheaderwidget.h"
+
 #include <QApplication>
 #include <QLabel>
 #include <QSurfaceFormat>
 #include <QDateTime>
-
 
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QWidget>
@@ -49,17 +50,16 @@ MainWindow::MainWindow(QWidget *parent) :
     //  Initialize the variables
     dataAdapter = new SerialAdapter();
     mainTimer = new QTimer();
-    mux = new DataMultiplexer();
+    mux = DataMultiplexer::GetP();
 
     //void response(const QString &s);
     connect(dataAdapter, &SerialAdapter::response, mux, &DataMultiplexer::ReceiveSerialData);
-    connect(mux, &DataMultiplexer::error, this, &MainWindow::LogLine);
-    LogLine("Starting up..");
+    connect(mux, &DataMultiplexer::logLine, this, &MainWindow::logLine);
+    logLine("Starting up..");
 
     /**
       * Check presence of OpenGL drivers
       */
-    //  Create a 3D plot
     Q3DScatter *graph = new Q3DScatter();
     //  Check that OpenGL exists
     if (!graph->hasContext()) {
@@ -86,7 +86,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // 'Connect' button opens serial port connection
     QObject::connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::toggleConnection);
     //  Serial adapter objects logs data into a MainWindow logger
-    QObject::connect(dataAdapter, &SerialAdapter::error, this, &MainWindow::LogLine);
+    QObject::connect(dataAdapter, &SerialAdapter::error, this, &MainWindow::logLine);
 
     //  Connect channel enable signals to slot
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
@@ -95,7 +95,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //TODO: Add data bits, parity and flow control fields
     //  For now assume 8bits, no parity, no flow control, 1 stop bit
     //  Connect/disconnect button
-    LogLine("Start-up completed, loading settings...");
+    logLine("Start-up completed, loading settings...");
     LoadSettings();
 
     //  Timer ticks at 1s, refreshing certain UI elements
@@ -103,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(mainTimer, &QTimer::timeout, this, &MainWindow::refreshUI);
     mainTimer->start();
 
-
+    dataAdapter->RegisterMux(mux);
 }
 
 /**
@@ -186,6 +186,14 @@ void MainWindow::LoadSettings()
 void MainWindow::refreshUI()
 {
     ui->timestamp->setText(QDateTime::currentDateTime().time().toString());
+
+    //  Refresh port selector if nothing is selected
+    if (ui->portSelector->currentText() == "")
+    {
+        const auto infos = QSerialPortInfo::availablePorts();
+        for (const QSerialPortInfo &info : infos)
+            ui->portSelector->addItem(info.portName());
+    }
 }
 
 /**
@@ -202,20 +210,22 @@ void MainWindow::toggleConnection()
                 ui->frameChSeparator->text()[0].cell(), \
                 ui->frameEndSep->text()[0].cell());
 
-
+        //  Collect channel labels and register them in the mux
         QString *chLabels = new QString[ch.size()];
-
         for (uint8_t i = 0; i < ch.size(); i++)
         {
-            chLabels[i] = ch[i]->GetLabel();
+            chLabels[i] = ch[i]->GetName();
         }
-        mux->SetSerialDataLabels(ch.size(), chLabels);
+        mux->RegisterSerialCh(ch.size(), chLabels);
+        //  Clean up before exit
         delete[] chLabels;
 
+        //  Configure serial port
         dataAdapter->updatePort(ui->portSelector->itemText(ui->portSelector->currentIndex()), \
                                 ui->portBaud->itemText(ui->portBaud->currentIndex()));
-        ui->portSelector->setEnabled(false);
-        ui->portBaud->setEnabled(false);
+        //  Prevent edits to serial port while connection is open
+        ui->serialconfTab->setEnabled(false);
+        //  Rename the button
         ui->connectButton->setText("Disconnect");
 
         dataAdapter->startThread();
@@ -223,8 +233,7 @@ void MainWindow::toggleConnection()
     }
     else if (ui->connectButton->text() == "Disconnect")
     {
-        ui->portSelector->setEnabled(true);
-        ui->portBaud->setEnabled(true);
+        ui->serialconfTab->setEnabled(true);
         ui->connectButton->setText("Connect");
 
         dataAdapter->stopThread();
@@ -236,7 +245,7 @@ void MainWindow::toggleConnection()
  * @brief [Slot function] Log a line to UI and text file
  * @param line
  */
-void MainWindow::LogLine(const QString &line)
+void MainWindow::logLine(const QString &line)
 {
     QString time = QDateTime::currentDateTime().time().toString();
     ui->logLine->setText(time + ": " + line);
@@ -280,7 +289,6 @@ void MainWindow::on_frameEndSep_editingFinished()
  */
 void MainWindow::on_channelNumber_valueChanged(int arg1)
 {
-    //static
     settings->setValue("channel/numOfChannels", arg1);
     settings->sync();
 
@@ -311,9 +319,6 @@ void MainWindow::on_channelNumber_valueChanged(int arg1)
     }
 
     //  Update MUX settings
-
-
-    //  Register channels
 
     //  Update serial frame info
 }
@@ -346,25 +351,20 @@ void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
 
 void MainWindow::RegisterMathChannel(uint8_t chID)
 {
-    //  TODO: Dirty initialization, make the array size dynamic
-    uint8_t count = 0;
-    uint8_t operations[20], serialChannels[20];
+    MathChannel *mc = new MathChannel();
 
+    mc->SetLabel(mathChName[chID-1]->text());
     //  Look up all the components of this channel ID
-    for (MathChannelComponent *X : mathComp)
+    for (UIMathChannelComponent *X : mathComp)
     {
         //  T
         if (X->GetMathCh() == (chID))
         {
-            serialChannels[count] = X->GetInCh();
-            operations[count] = X->GetMath();
-            count++;
-            if (count >= 20) break;
+            mc->AddComponent(static_cast<MathOperation>(X->GetMath()), X->GetInCh());
         }
     }
 
-    mux->RegisterMathChannel(chID, mathChName[chID-1]->text(), \
-                             operations, serialChannels, count);
+    mux->RegisterMathChannel(chID, mc);
 }
 
 /**
@@ -375,7 +375,7 @@ void MainWindow::on_addMathComp_clicked()
     //  Convert current id to string for easier manipulation
     QString id_str = QString::number(mathComp.size());
     //  Construct component for channel math and push it in the vector
-    MathChannelComponent *tmp = new MathChannelComponent((uint8_t)mathComp.size());
+    UIMathChannelComponent *tmp = new UIMathChannelComponent((uint8_t)mathComp.size());
     mathComp.push_back(tmp);
 
     //  Add new component to the UI
@@ -388,7 +388,7 @@ void MainWindow::on_addMathComp_clicked()
     tmp->SetMath(settings->value("math/component"+id_str+"math","0").toInt());
     //  0 - Add
     //  1 - Subtract
-    connect(tmp, &MathChannelComponent::deleteRequested, \
+    connect(tmp, &UIMathChannelComponent::deleteRequested, \
             this, &MainWindow::on_delete_updateMathComp);
 }
 
@@ -418,8 +418,10 @@ void MainWindow::UpdateAvailMathCh()
         {
             mathCh[count++] = (i+1);
             mathChName[i]->setEnabled(true);
-            //  Load channel name from settings, if it exists
-            mathChName[i]->setText(settings->value("math/channel"+id_str+"name","Math "+id_str).toString());
+            //  Load channel name from settings, if it exists and there
+            //  isn't one already set
+            if (mathChName[i]->text() == "")
+                mathChName[i]->setText(settings->value("math/channel"+id_str+"name","Math "+id_str).toString());
         }
         else
             mathChName[i]->setEnabled(false);
@@ -427,7 +429,7 @@ void MainWindow::UpdateAvailMathCh()
         //  If it's enabled, but it wasn't in the last call
         if (mathChEnabled[i]->isChecked() && !(((1<<(i+1)) & chMask) > 0))
         {
-            qDebug() << "Enabling channel " << (i+1) << QString::number(chMask);
+
             chMask |= (1<<(i+1));
             RegisterMathChannel(i+1);
         }
@@ -490,13 +492,35 @@ void MainWindow::on_delete_updateMathComp(uint8_t id)
  */
 void MainWindow::on_add3D_clicked()
 {
+    QWidget *orient3DWindow = new QWidget();
     OrientationWidget *tmp = new OrientationWidget();
+
+    QVBoxLayout *windMainLayout = new QVBoxLayout();
+    orient3DWindow->setLayout(windMainLayout);
+
+
+    graphHeaderWidget *header = new graphHeaderWidget(3, false);
+    windMainLayout->addLayout(header->GetLayout());
+    windMainLayout->addWidget(tmp);
+
+    //  Make sure input channel dropdown have updated list of channels
+    QObject::connect(mux,
+                     &DataMultiplexer::ChannelsUpdated,
+                     header,
+                     &graphHeaderWidget::UpdateChannelDropdown);
+    //  Handle dynamic channel selection by dropdown
+    QObject::connect(header, &graphHeaderWidget::UpdateInputChannels,
+                     tmp, &OrientationWidget::UpdateInputChannels);
+
+
     tmp->setMinimumSize(QSize(200,200));
     tmp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    ui->mdiArea->addSubWindow(tmp);
+    ui->mdiArea->addSubWindow(orient3DWindow);
     tmp->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
     tmp->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
+
+    mux->RegisterGraph("3D one", 3, tmp);
 
     tmp->parentWidget()->show();
 }

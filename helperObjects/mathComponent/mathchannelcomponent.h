@@ -11,13 +11,13 @@
 #include <QSpacerItem>
 
 
-class MathChannelComponent :  public QObject
+class UIMathChannelComponent :  public QObject
 {
     Q_OBJECT
 
 public:
-    MathChannelComponent(uint8_t id);
-    ~MathChannelComponent();
+    UIMathChannelComponent(uint8_t id);
+    ~UIMathChannelComponent();
 
     void UpdateMathCh(int *mathCh, int size);
 

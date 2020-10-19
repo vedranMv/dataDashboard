@@ -1,7 +1,7 @@
 #include "mathchannelcomponent.h"
 #include <QDebug>
 
-MathChannelComponent::~MathChannelComponent()
+UIMathChannelComponent::~UIMathChannelComponent()
 {
     //  Deletion of object is called from MainWindow
     //  Here we only need to delete the layout
@@ -14,7 +14,7 @@ MathChannelComponent::~MathChannelComponent()
     layout->deleteLater();
 }
 
-MathChannelComponent::MathChannelComponent(uint8_t id): _id(id)
+UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
 {
     labels[0] = new QLabel("Input channel");
     labels[1] = new QLabel("Math channel");
@@ -47,12 +47,12 @@ MathChannelComponent::MathChannelComponent(uint8_t id): _id(id)
     layout->addWidget(deleteButton, 0, Qt::AlignLeft);
 
     for (int i = 0; i < 6; i++)
-        mathChSelector->addItem(QString::number(i));
+        mathChSelector->addItem(QString::number(i+1));
 
-    QObject::connect(deleteButton, &QPushButton::pressed, this, &MathChannelComponent::deleteComponent);
+    QObject::connect(deleteButton, &QPushButton::pressed, this, &UIMathChannelComponent::deleteComponent);
 }
 
-void MathChannelComponent::UpdateMathCh(int *mathCh, int size)
+void UIMathChannelComponent::UpdateMathCh(int *mathCh, int size)
 {
     int oldCh = mathChSelector->currentText().toInt(),
         index = -1;
@@ -69,17 +69,17 @@ void MathChannelComponent::UpdateMathCh(int *mathCh, int size)
     }
     mathChSelector->setCurrentIndex(index);
 }
-void MathChannelComponent::SetInCh(int inCh)
+void UIMathChannelComponent::SetInCh(int inCh)
 {
     inChSelector->setValue(inCh);
 }
 
-int MathChannelComponent::GetInCh()
+int UIMathChannelComponent::GetInCh()
 {
     return inChSelector->value();
 }
 
-void MathChannelComponent::SetMathCh(int mathCh)
+void UIMathChannelComponent::SetMathCh(int mathCh)
 {
     bool valid = false;
     int i;
@@ -95,40 +95,40 @@ void MathChannelComponent::SetMathCh(int mathCh)
         mathChSelector->setCurrentIndex(i);
 }
 
-int MathChannelComponent::GetMathCh()
+int UIMathChannelComponent::GetMathCh()
 {
     return mathChSelector->currentText().toInt();
 }
 
-void MathChannelComponent::SetMath(int math)
+void UIMathChannelComponent::SetMath(int math)
 {
     //  0 - Add
     //  1 - Subtract
     mathSelector->setCurrentIndex(math);
 }
 
-int MathChannelComponent::GetMath()
+int UIMathChannelComponent::GetMath()
 {
     //  0 - Add
     //  1 - Subtract
     return mathSelector->currentIndex();
 }
 
-void MathChannelComponent::deleteComponent()
+void UIMathChannelComponent::deleteComponent()
 {
     emit deleteRequested(_id);
 }
 
-QHBoxLayout* MathChannelComponent::GetLayout()
+QHBoxLayout* UIMathChannelComponent::GetLayout()
 {
     return layout;
 }
 
-void MathChannelComponent::SetID(uint8_t id)
+void UIMathChannelComponent::SetID(uint8_t id)
 {
     _id = id;
 }
-uint8_t  MathChannelComponent::GetID()
+uint8_t  UIMathChannelComponent::GetID()
 {
     return _id;
 }

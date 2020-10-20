@@ -38,20 +38,17 @@
 #include <QtCore/qrandom.h>
 #include <QtWidgets/QComboBox>
 
+#include <helperObjects/dataMultiplexer/datamultiplexer.h>
+
 using namespace QtDataVisualization;
 
-//#define RANDOM_SCATTER // Uncomment this to switch to random scatter
-
-const int numberOfItems = 3600;
-const float curveDivider = 3.0f;
-const int lowerNumberOfItems = 900;
+const int lowerNumberOfItems = 10000;
 const float lowerCurveDivider = 0.75f;
 
 ScatterDataModifier::ScatterDataModifier(Q3DScatter *scatter)
     : m_graph(scatter),
       m_fontSize(40.0f),
       m_style(QAbstract3DSeries::MeshPoint),
-      m_smooth(true),
       m_itemCount(lowerNumberOfItems),
       m_curveDivider(lowerCurveDivider)
 {
@@ -68,21 +65,62 @@ ScatterDataModifier::ScatterDataModifier(Q3DScatter *scatter)
     QScatterDataProxy *proxy = new QScatterDataProxy;
     QScatter3DSeries *series = new QScatter3DSeries(proxy);
     series->setItemLabelFormat(QStringLiteral("@xTitle: @xLabel @yTitle: @yLabel @zTitle: @zLabel"));
-    series->setMeshSmooth(m_smooth);
+    series->setMeshSmooth(true);
     m_graph->addSeries(series);
     //! [2]
     if (m_graph->seriesList().size())
         m_graph->seriesList().at(0)->setMesh(m_style);
     m_graph->activeTheme()->setBackgroundEnabled(false);
     changeFont(QFont("Arial"));
-    //! [3]
-    addData();
-    //! [3]
+
+    _dataArray = new QScatterDataArray;
+    _dataArray->resize(m_itemCount);
+
+    m_graph->seriesList().at(0)->dataProxy()->resetArray(_dataArray);
 }
 
 ScatterDataModifier::~ScatterDataModifier()
 {
     delete m_graph;
+    DataMultiplexer::GetI().UnregisterGraph(this);
+}
+
+/**
+ * @brief [Slot] Function that is called whenever input channel has been
+ *      changed in the dropdown fields of the header. It updates the channel
+ *      selection stored in this object.
+ * @param inChannels    Array of 3 input channel indexes
+ */
+void ScatterDataModifier::UpdateInputChannels(uint8_t *inChannels)
+{
+   _inputChannels[0] = inChannels[0];
+   _inputChannels[1] = inChannels[1];
+   _inputChannels[2] = inChannels[2];
+
+  _maxInChannel = 0;
+  for (uint8_t i = 0; i < 3; i++)
+      if (inChannels[i] > _maxInChannel)
+          _maxInChannel = inChannels[i];
+}
+
+/**
+ * @brief Function directly called by the multiplexer to push data into
+ *      the graph
+ * @param data  Array of available data
+ * @param n     Size of data array
+ */
+void ScatterDataModifier::ReceiveData(double *data, uint8_t n)
+{
+    static uint32_t index = 0;
+    // Check if the largest index of input channels is available in the
+    // received block of data
+    if (n < _maxInChannel)
+        return;
+
+    m_graph->seriesList().at(0)->dataProxy()->insertItem(index,QScatterDataItem(QVector3D( (float)data[ _inputChannels[1] ],
+                                                         (float)data[ _inputChannels[2] ],
+                                                         (float)data[ _inputChannels[0] ])));
+    index = (index+1) % lowerNumberOfItems;
 }
 
 void ScatterDataModifier::addData()
@@ -100,27 +138,15 @@ void ScatterDataModifier::addData()
     QScatterDataItem *ptrToDataArray = &dataArray->first();
     //! [5]
 
-#ifdef RANDOM_SCATTER
+
     for (int i = 0; i < m_itemCount; i++) {
-        ptrToDataArray->setPosition(randVector());
+        //ptrToDataArray->setPosition(randVector());
         ptrToDataArray++;
     }
-#else
-    //! [6]
-    float limit = qSqrt(m_itemCount) / 2.0f;
-    for (float i = -limit; i < limit; i++) {
-        for (float j = -limit; j < limit; j++) {
-            ptrToDataArray->setPosition(QVector3D(i + 0.5f,
-                                                  qCos(qDegreesToRadians((i * j) / m_curveDivider)),
-                                                  j + 0.5f));
-            ptrToDataArray++;
-        }
-    }
-    //! [6]
-#endif
 
     //! [7]
     m_graph->seriesList().at(0)->dataProxy()->resetArray(dataArray);
+
     //! [7]
 }
 
@@ -160,22 +186,3 @@ void ScatterDataModifier::setGridEnabled(int enabled)
 }
 //! [8]
 
-void ScatterDataModifier::toggleItemCount()
-{
-    m_itemCount = numberOfItems;
-    m_curveDivider = curveDivider;
-
-    m_graph->seriesList().at(0)->dataProxy()->resetArray(0);
-    addData();
-}
-
-QVector3D ScatterDataModifier::randVector()
-{
-    return QVector3D(
-                (float)(QRandomGenerator::global()->bounded(100)) / 2.0f -
-                (float)(QRandomGenerator::global()->bounded(100)) / 2.0f,
-                (float)(QRandomGenerator::global()->bounded(100)) / 100.0f -
-                (float)(QRandomGenerator::global()->bounded(100)) / 100.0f,
-                (float)(QRandomGenerator::global()->bounded(100)) / 2.0f -
-                (float)(QRandomGenerator::global()->bounded(100)) / 2.0f);
-}

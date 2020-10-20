@@ -43,6 +43,9 @@ public:
     explicit ScatterDataModifier(Q3DScatter *scatter);
     ~ScatterDataModifier();
 
+    void UpdateInputChannels(uint8_t *inChannels);
+    void ReceiveData(double *data, uint8_t n);
+
     void addData();
     void changeStyle();
     void changeFont(const QFont &font);
@@ -56,20 +59,18 @@ public:
 public Q_SLOTS:
     void changeStyle(int style);
 
-Q_SIGNALS:
-    void backgroundEnabledChanged(bool enabled);
-    void gridEnabledChanged(bool enabled);
-    void shadowQualityChanged(int quality);
-    void fontChanged(QFont font);
 
 private:
-    QVector3D randVector();
+
     Q3DScatter *m_graph;
     int m_fontSize;
     QAbstract3DSeries::Mesh m_style;
-    bool m_smooth;
     int m_itemCount;
     float m_curveDivider;
+
+    uint8_t _inputChannels[3];
+    uint8_t _maxInChannel;
+    QScatterDataArray *_dataArray;
 };
 
 #endif

@@ -61,35 +61,13 @@ void DataMultiplexer::RegisterSerialCh(uint8_t n, QString *chName)
 /**
  * @brief RegisterMathChannel
  * @param channelId Math channel id (1-indexed)
- * @param label
- * @param operations
- * @param serialChannels
- * @param n
+ * @param mc
  */
-void DataMultiplexer::RegisterMathChannel(uint8_t channelId,
-                                          QString label,
-                                          uint8_t *operation,
-                                          uint8_t *serialChannels,
-                                          uint8_t n)
-{
-    _mChannel[channelId-1].Clear();
-
-    for (uint8_t i = 0; i < n; i++)
-    {
-        _mChannel[channelId-1].SetLabel(label);
-        _mChannel[channelId-1].AddComponent(static_cast<MathOperation>(operation[i]), serialChannels[i]);
-    }
-    _mChannel[channelId-1].Enabled = true;
-    qDebug() << "Registered channel " << channelId << "with " << n << "components";
-    _channelCount[SignalSource::MathSignal]++;
-}
-
 void DataMultiplexer::RegisterMathChannel(uint8_t channelId,
                                           MathChannel *mc)
 {
     //  Clean up old variable
     _mChannel[channelId-1].Clear();
-    //delete &(_mChannel[channelId-1]);
 
     //  Move new data in
     _mChannel[channelId-1] = *mc;
@@ -115,6 +93,11 @@ void DataMultiplexer::UnegisterMathChannel(uint8_t channelId)
     emit ChannelsUpdated();
 }
 
+/**
+ * @brief Assemble a list of available input channels. Usually called by the
+ *      graphs to know which channels to the user
+ * @return QStringList with all channel labels
+ */
 QStringList DataMultiplexer::GetChannelList()
 {
     QStringList retVal;
@@ -131,25 +114,28 @@ QStringList DataMultiplexer::GetChannelList()
     return retVal;
 }
 
+/**
+ * @brief Perform internal update of available input channels
+ */
 void DataMultiplexer::_InternalChannelUpdate()
 {
+    //  This can't be done with a running thread. Stop it beforehand
     if (isRunning())
     {
         _threadQuit = true;
         wait();
     }
 
+    //  If _channelData has been initialized before, delete it first
     if (_channelCount[SignalSource::AllChannels] != 0)
-    {
-        qDebug() << "Trying to delete";
         delete [] _channelData;
-        qDebug() << "Done to delete";
-    }
 
+    //  Compute new number total of channels
     _channelCount[SignalSource::AllChannels] =
             _channelCount[SignalSource::SerialSignal] +
             _channelCount[SignalSource::MathSignal];
 
+    //  Allocate data array for all current channels
     _channelData = new double[_channelCount[SignalSource::AllChannels]];
 
 }
@@ -157,14 +143,28 @@ void DataMultiplexer::_InternalChannelUpdate()
 /**
  * @brief DataMultiplexer::RegisterGraph
  * @param name
- * @param numCh
+ * @param nInChannels
  * @param receiver
  */
 void DataMultiplexer::RegisterGraph(QString name,
                                 uint8_t nInChannels,
                                 OrientationWidget* receiver)
 {
-    _Graphs.push_back(GraphClient(name,nInChannels,receiver));
+    _Graphs.push_back(new GraphClient(name,nInChannels,receiver));
+}
+
+/**
+ * @brief DataMultiplexer::RegisterGraph
+ * @param name
+ * @param nInChannels
+ * @param receiver
+ */
+void DataMultiplexer::RegisterGraph(QString name,
+                                uint8_t nInChannels,
+                                ScatterDataModifier* receiver)
+{
+    _Graphs.push_back(new GraphClient(name,nInChannels,receiver));
+    emit logLine("Registered graph "+name);
 }
 
 /**
@@ -173,9 +173,24 @@ void DataMultiplexer::RegisterGraph(QString name,
  */
 void DataMultiplexer::UnregisterGraph(OrientationWidget* reciver)
 {
+    QString name("");
     for (uint8_t i = 0; i < _Graphs.size(); i++)
     {
-        if (_Graphs[i].Receiver() == reciver)
+        if (_Graphs[i]->Receiver(reciver) == reciver)
+        {
+            name = _Graphs[i]->_name;
+            _Graphs.erase(_Graphs.begin()+i);
+            break;
+        }
+    }
+    emit logLine("Unregistered graph "+name);
+}
+
+void DataMultiplexer::UnregisterGraph(ScatterDataModifier* reciver)
+{
+    for (uint8_t i = 0; i < _Graphs.size(); i++)
+    {
+        if (_Graphs[i]->Receiver(reciver) == reciver)
         {
             _Graphs.erase(_Graphs.begin()+i);
             break;
@@ -224,7 +239,6 @@ void DataMultiplexer::ReceiveSerialData(const QString &buffer)
     }
 
     _SerialdataReady.release(2);
-
 }
 
 /**
@@ -244,7 +258,7 @@ void DataMultiplexer::run()
         //  Sanity check, has this been properly initialized?
         if (_SerialLabels.size() == 0)
         {
-            emit logLine(tr("Channel number discrepancy"));
+            emit logLine(tr("No serial channels registered"));
             goto end_goto;
         }
 
@@ -305,12 +319,12 @@ void DataMultiplexer::run()
 
             ComputeMathChannels();
             //  Update graphs
-            for (GraphClient& X : _Graphs)
-                X.SendData(_channelCount[SignalSource::AllChannels], _channelData);
+            for (GraphClient* X : _Graphs)
+                X->SendData(_channelCount[SignalSource::AllChannels], _channelData);
 
-//            for (uint8_t i = 0; i < _channelCount[0]; i++)
-//                qDebug()<<_channelCount[0]<<":"<<_channelData[0]<<","<<_channelData[1]<<","<<_channelData[2]<<"," \
-//                        <<_channelData[3]<<","<<_channelData[4];
+            for (uint8_t i = 0; i < _channelCount[0]; i++)
+                qDebug()<<_channelCount[0]<<":"<<_channelData[0]<<","<<_channelData[1]<<","<<_channelData[2]<<"," \
+                        <<_channelData[3]<<","<<_channelData[4];
         }
 end_goto:
         _SerialdataReady.release(1);

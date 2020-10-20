@@ -90,10 +90,10 @@ void OrientationWidget::ReceiveData(double *data, uint8_t n)
 }
 
 /**
- * @brief [SLOT] Function that is called whenever input channel has been
+ * @brief [Slot] Function that is called whenever input channel has been
  *      changed in the dropdown fields of the header. It updates the channel
  *      selection stored in this object.
- * @param inChannels
+ * @param inChannels    Array of 3 input channel indexes
  */
 void OrientationWidget::UpdateInputChannels(uint8_t *inChannels)
 {

@@ -394,7 +394,8 @@ void MainWindow::on_addMathComp_clicked()
 
 /**
  * @brief [Slot function] Update a list of available math channels used by
- *      math channel entries
+ *      other componenets. Function called whenever a match channel checkbox
+ *      has been clicked
  */
 void MainWindow::UpdateAvailMathCh()
 {
@@ -409,8 +410,6 @@ void MainWindow::UpdateAvailMathCh()
 
     //  Loop through all QCheckBox elements and configure UI look based on
     //  whether they are checked or not
-
-
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
     {
         QString id_str = QString::number(i+1);
@@ -492,6 +491,7 @@ void MainWindow::on_delete_updateMathComp(uint8_t id)
  */
 void MainWindow::on_add3D_clicked()
 {
+    static uint8_t _3DgraphCount = 0;
     QWidget *orient3DWindow = new QWidget();
     OrientationWidget *tmp = new OrientationWidget();
 
@@ -519,29 +519,55 @@ void MainWindow::on_add3D_clicked()
     ui->mdiArea->addSubWindow(orient3DWindow);
     tmp->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
     tmp->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
+    tmp->parentWidget()->setWindowTitle("3D Orientation " + QString::number(_3DgraphCount));
 
-    mux->RegisterGraph("3D one", 3, tmp);
+    mux->RegisterGraph("3D Orientation " + QString::number(_3DgraphCount), 3, tmp);
 
     tmp->parentWidget()->show();
+    _3DgraphCount++;
 }
 
 void MainWindow::on_addScatter_clicked()
 {
-    //  Create magnetometer scatter plot
+    static uint8_t _ScatterCount = 0;
+    QWidget *scatterWindow = new QWidget();
+    //  Create scatter plot
     Q3DScatter *graph = new Q3DScatter();
     QWidget *tmp = QWidget::createWindowContainer(graph);
 
-    //  Pushes data into the magnetometer scatter plot
+    //  Pushes data into the scatter plot
     ScatterDataModifier *modifier = new ScatterDataModifier(graph);
+    modifier->setParent(scatterWindow);
+
+    QVBoxLayout *windMainLayout = new QVBoxLayout();
+    scatterWindow->setLayout(windMainLayout);
+
+
+    graphHeaderWidget *header = new graphHeaderWidget(3, true);
+    windMainLayout->addLayout(header->GetLayout());
+    windMainLayout->addWidget(tmp);
+
+    //  Make sure input channel dropdowns have updated list of channels
+    QObject::connect(mux,
+                     &DataMultiplexer::ChannelsUpdated,
+                     header,
+                     &graphHeaderWidget::UpdateChannelDropdown);
+    //  Handle dynamic channel selection by dropdown
+    QObject::connect(header, &graphHeaderWidget::UpdateInputChannels,
+                     modifier, &ScatterDataModifier::UpdateInputChannels);
 
     tmp->setMinimumSize(QSize(200,200));
     tmp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
-    ui->mdiArea->addSubWindow(tmp);
+    ui->mdiArea->addSubWindow(scatterWindow);
     tmp->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
     tmp->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
+    tmp->parentWidget()->setWindowTitle("3D Orientation " + QString::number(_ScatterCount));
+
+    mux->RegisterGraph("Scatter " + QString::number(_ScatterCount), 3, modifier);
 
     tmp->parentWidget()->show();
+    _ScatterCount++;
     //TODO: Closing this window crashes application
 }
 

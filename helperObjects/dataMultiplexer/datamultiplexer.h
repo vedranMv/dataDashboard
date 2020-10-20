@@ -45,8 +45,6 @@ public:
 
     void SendData(uint8_t n, double* data)
     {
-        if (n != _inChannels)
-            return;
         _reciver->ReceiveData(data, n);
     }
 
@@ -118,7 +116,7 @@ public:
 
 
     void RegisterGraph(QString name,
-                       uint8_t nCh,
+                       uint8_t nInChannels,
                        OrientationWidget* reciver);
 
     void UnregisterGraph(OrientationWidget* reciver);

@@ -75,30 +75,10 @@ public:
 
      QQuaternion rotation;
 
-     void ReceiveData(double *data, uint8_t n)
-     {
-         if (n < _maxInChannel)
-             return;
-
-         // Update rotation
-        rotation = QQuaternion::fromEulerAngles(-(float)data[_inputChannels[0]],
-                                                (float)data[_inputChannels[1]],
-                                                (float)data[_inputChannels[2]]);
-        update();
-     }
+     void ReceiveData(double *data, uint8_t n);
 
 public slots:
-     void UpdateInputChannels(uint8_t *inChannels)
-     {
-        _inputChannels[0] = inChannels[0];
-        _inputChannels[1] = inChannels[1];
-        _inputChannels[2] = inChannels[2];
-
-       _maxInChannel = 0;
-       for (uint8_t i = 0; i < 3; i++)
-           if (inChannels[i] > _maxInChannel)
-               _maxInChannel = inChannels[i];
-     }
+     void UpdateInputChannels(uint8_t *inChannels);
 
 protected:
     void initializeGL() override;

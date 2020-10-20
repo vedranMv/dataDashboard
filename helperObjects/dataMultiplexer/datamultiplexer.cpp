@@ -133,14 +133,11 @@ QStringList DataMultiplexer::GetChannelList()
 
 void DataMultiplexer::_InternalChannelUpdate()
 {
-    qDebug() << "Attempting to reconfigure0";
     if (isRunning())
     {
         _threadQuit = true;
         wait();
     }
-
-    qDebug() << "Attempting to reconfigureA";
 
     if (_channelCount[SignalSource::AllChannels] != 0)
     {
@@ -149,13 +146,9 @@ void DataMultiplexer::_InternalChannelUpdate()
         qDebug() << "Done to delete";
     }
 
-    qDebug() << "Attempting to reconfigureB";
-
     _channelCount[SignalSource::AllChannels] =
             _channelCount[SignalSource::SerialSignal] +
             _channelCount[SignalSource::MathSignal];
-
-    qDebug() << "Attempting to reconfigureC";
 
     _channelData = new double[_channelCount[SignalSource::AllChannels]];
 
@@ -168,10 +161,10 @@ void DataMultiplexer::_InternalChannelUpdate()
  * @param receiver
  */
 void DataMultiplexer::RegisterGraph(QString name,
-                                uint8_t numCh,
+                                uint8_t nInChannels,
                                 OrientationWidget* receiver)
 {
-    _Graphs.push_back(GraphClient(name,numCh,receiver));
+    _Graphs.push_back(GraphClient(name,nInChannels,receiver));
 }
 
 /**
@@ -311,13 +304,13 @@ void DataMultiplexer::run()
             }
 
             ComputeMathChannels();
-    //        //  Update graphs
+            //  Update graphs
             for (GraphClient& X : _Graphs)
                 X.SendData(_channelCount[SignalSource::AllChannels], _channelData);
 
-            for (uint8_t i = 0; i < _channelCount[0]; i++)
-                qDebug()<<_channelCount[0]<<":"<<_channelData[0]<<","<<_channelData[1]<<","<<_channelData[2]<<"," \
-                        <<_channelData[3]<<","<<_channelData[4];
+//            for (uint8_t i = 0; i < _channelCount[0]; i++)
+//                qDebug()<<_channelCount[0]<<":"<<_channelData[0]<<","<<_channelData[1]<<","<<_channelData[2]<<"," \
+//                        <<_channelData[3]<<","<<_channelData[4];
         }
 end_goto:
         _SerialdataReady.release(1);

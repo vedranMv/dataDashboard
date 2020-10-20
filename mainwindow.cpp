@@ -503,7 +503,7 @@ void MainWindow::on_add3D_clicked()
     windMainLayout->addLayout(header->GetLayout());
     windMainLayout->addWidget(tmp);
 
-    //  Make sure input channel dropdown have updated list of channels
+    //  Make sure input channel dropdowns have updated list of channels
     QObject::connect(mux,
                      &DataMultiplexer::ChannelsUpdated,
                      header,

@@ -33,18 +33,23 @@
 #include <QtDataVisualization/q3dscatter.h>
 #include <QtDataVisualization/qabstract3dseries.h>
 #include <QtGui/QFont>
+#include <QWidget>
 
 using namespace QtDataVisualization;
 
-class ScatterDataModifier : public QObject
+class ScatterDataModifier : public QWidget
 {
     Q_OBJECT
 public:
-    explicit ScatterDataModifier(Q3DScatter *scatter);
+    explicit ScatterDataModifier();
     ~ScatterDataModifier();
 
     void UpdateInputChannels(uint8_t *inChannels);
     void ReceiveData(double *data, uint8_t n);
+    QWidget* WindowContainer()
+    {
+        return _contWind;
+    }
 
     void addData();
     void changeStyle();
@@ -52,7 +57,6 @@ public:
     void changeFontSize(int fontsize);
     void setBackgroundEnabled(int enabled);
     void setGridEnabled(int enabled);
-    void setSmoothDots(int smooth);
     void toggleItemCount();
     void start();
 
@@ -68,6 +72,7 @@ private:
     int m_itemCount;
     float m_curveDivider;
 
+    QWidget *_contWind;
     uint8_t _inputChannels[3];
     uint8_t _maxInChannel;
     QScatterDataArray *_dataArray;

@@ -91,7 +91,7 @@ private:
     QString _name;
     uint8_t _inChannels;
     OrientationWidget* _reciver3D;
-    ScatterDataModifier *_receiverScatter;
+    ScatterDataModifier* _receiverScatter;
     std::vector<uint8_t>_inputChannelMap;
 };
 
@@ -150,7 +150,7 @@ public:
                        OrientationWidget* reciver);
     void RegisterGraph(QString name,
                        uint8_t nInChannels,
-                       ScatterDataModifier* receiver);
+                       ScatterDataModifier *receiver);
 
     void UnregisterGraph(OrientationWidget* reciver);
     void UnregisterGraph(ScatterDataModifier* reciver);

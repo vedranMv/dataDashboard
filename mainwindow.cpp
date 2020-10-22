@@ -530,44 +530,17 @@ void MainWindow::on_add3D_clicked()
 void MainWindow::on_addScatter_clicked()
 {
     static uint8_t _ScatterCount = 0;
-    QWidget *scatterWindow = new QWidget();
     //  Create scatter plot
-    Q3DScatter *graph = new Q3DScatter();
-    QWidget *tmp = QWidget::createWindowContainer(graph);
-
-    //  Pushes data into the scatter plot
-    ScatterDataModifier *modifier = new ScatterDataModifier(graph);
-    modifier->setParent(scatterWindow);
-
-    QVBoxLayout *windMainLayout = new QVBoxLayout();
-    scatterWindow->setLayout(windMainLayout);
-
-
-    graphHeaderWidget *header = new graphHeaderWidget(3, true);
-    windMainLayout->addLayout(header->GetLayout());
-    windMainLayout->addWidget(tmp);
-
-    //  Make sure input channel dropdowns have updated list of channels
-    QObject::connect(mux,
-                     &DataMultiplexer::ChannelsUpdated,
-                     header,
-                     &graphHeaderWidget::UpdateChannelDropdown);
-    //  Handle dynamic channel selection by dropdown
-    QObject::connect(header, &graphHeaderWidget::UpdateInputChannels,
-                     modifier, &ScatterDataModifier::UpdateInputChannels);
-
-    tmp->setMinimumSize(QSize(200,200));
-    tmp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    ScatterDataModifier *scatterWindow = new ScatterDataModifier();
 
     ui->mdiArea->addSubWindow(scatterWindow);
-    tmp->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
-    tmp->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
-    tmp->parentWidget()->setWindowTitle("3D Orientation " + QString::number(_ScatterCount));
+    scatterWindow->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
+    scatterWindow->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
+    scatterWindow->parentWidget()->setWindowTitle("3D Orientation " + QString::number(_ScatterCount));
 
-    mux->RegisterGraph("Scatter " + QString::number(_ScatterCount), 3, modifier);
+    mux->RegisterGraph("Scatter " + QString::number(_ScatterCount), 3, scatterWindow);
 
-    tmp->parentWidget()->show();
+    scatterWindow->parentWidget()->show();
     _ScatterCount++;
-    //TODO: Closing this window crashes application
 }
 

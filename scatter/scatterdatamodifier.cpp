@@ -37,21 +37,48 @@
 #include <QtCore/qmath.h>
 #include <QtCore/qrandom.h>
 #include <QtWidgets/QComboBox>
+#include <QVBoxLayout>
 
 #include <helperObjects/dataMultiplexer/datamultiplexer.h>
+#include <helperObjects/graphHeaderWidget/graphheaderwidget.h>
 
 using namespace QtDataVisualization;
 
 const int lowerNumberOfItems = 10000;
 const float lowerCurveDivider = 0.75f;
 
-ScatterDataModifier::ScatterDataModifier(Q3DScatter *scatter)
-    : m_graph(scatter),
-      m_fontSize(40.0f),
+ScatterDataModifier::ScatterDataModifier()
+    : m_fontSize(40.0f),
       m_style(QAbstract3DSeries::MeshPoint),
       m_itemCount(lowerNumberOfItems),
       m_curveDivider(lowerCurveDivider)
 {
+    m_graph = new Q3DScatter();
+
+    //  Create container window and set size policy
+    _contWind = QWidget::createWindowContainer(m_graph);
+    _contWind->setMinimumSize(QSize(200,200));
+    _contWind->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    //  Make sure to delete the object when underlying window is deleted
+    connect(_contWind, &QWidget::destroyed, this, &ScatterDataModifier::deleteLater);
+
+    QVBoxLayout *windMainLayout = new QVBoxLayout();
+    this->setLayout(windMainLayout);
+
+    graphHeaderWidget *header = new graphHeaderWidget(3, false);
+    windMainLayout->addLayout(header->GetLayout());
+    windMainLayout->addWidget(_contWind);
+
+    //  Handle dynamic channel selection by dropdown
+    QObject::connect(header, &graphHeaderWidget::UpdateInputChannels,
+                     this, &ScatterDataModifier::UpdateInputChannels);
+
+    //  Make sure input channel dropdowns have updated list of channels
+    QObject::connect(DataMultiplexer::GetP(),
+                     &DataMultiplexer::ChannelsUpdated,
+                     header,
+                     &graphHeaderWidget::UpdateChannelDropdown);
+
     //! [0]
     m_graph->activeTheme()->setType(Q3DTheme::ThemeEbony);
     QFont font = m_graph->activeTheme()->font();
@@ -81,8 +108,11 @@ ScatterDataModifier::ScatterDataModifier(Q3DScatter *scatter)
 
 ScatterDataModifier::~ScatterDataModifier()
 {
-    delete m_graph;
+    qDebug() << "Destroying the scatter plot";
+
     DataMultiplexer::GetI().UnregisterGraph(this);
+    //delete _dataArray;
+    //delete m_graph;
 }
 
 /**
@@ -159,13 +189,6 @@ void ScatterDataModifier::changeStyle(int style)
         if (m_graph->seriesList().size())
             m_graph->seriesList().at(0)->setMesh(m_style);
     }
-}
-
-void ScatterDataModifier::setSmoothDots(int smooth)
-{
-    m_smooth = bool(smooth);
-    QScatter3DSeries *series = m_graph->seriesList().at(0);
-    series->setMeshSmooth(m_smooth);
 }
 
 void ScatterDataModifier::changeFont(const QFont &font)

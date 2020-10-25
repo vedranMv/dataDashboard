@@ -34,15 +34,20 @@
 #include <QtDataVisualization/qabstract3dseries.h>
 #include <QtGui/QFont>
 #include <QWidget>
+#include <QVBoxLayout>
+#include <QMdiSubWindow>
+
+#include <helperObjects/graphHeaderWidget/graphheaderwidget.h>
+
 
 using namespace QtDataVisualization;
 
-class ScatterDataModifier : public QWidget
+class ScatterDataModifier : public QMdiSubWindow
 {
     Q_OBJECT
 public:
-    explicit ScatterDataModifier();
-    ~ScatterDataModifier();
+    explicit ScatterDataModifier(Q3DScatter *scatter);
+    ~ScatterDataModifier() override;
 
     void UpdateInputChannels(uint8_t *inChannels);
     void ReceiveData(double *data, uint8_t n);
@@ -50,8 +55,11 @@ public:
     {
         return _contWind;
     }
+    QVBoxLayout* GetLayout()
+    {
+        return windMainLayout;
+    }
 
-    void addData();
     void changeStyle();
     void changeFont(const QFont &font);
     void changeFontSize(int fontsize);
@@ -63,8 +71,8 @@ public:
 public Q_SLOTS:
     void changeStyle(int style);
 
-
 private:
+    //void closeEvent(QCloseEvent *closeEvent) override;
 
     Q3DScatter *m_graph;
     int m_fontSize;
@@ -76,6 +84,8 @@ private:
     uint8_t _inputChannels[3];
     uint8_t _maxInChannel;
     QScatterDataArray *_dataArray;
+    QVBoxLayout *windMainLayout;
+    graphHeaderWidget *header;
 };
 
 #endif

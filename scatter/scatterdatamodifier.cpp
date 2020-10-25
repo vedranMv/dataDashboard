@@ -37,37 +37,40 @@
 #include <QtCore/qmath.h>
 #include <QtCore/qrandom.h>
 #include <QtWidgets/QComboBox>
-#include <QVBoxLayout>
 
 #include <helperObjects/dataMultiplexer/datamultiplexer.h>
-#include <helperObjects/graphHeaderWidget/graphheaderwidget.h>
+#include <mainwindow.h>
 
 using namespace QtDataVisualization;
 
 const int lowerNumberOfItems = 10000;
 const float lowerCurveDivider = 0.75f;
 
-ScatterDataModifier::ScatterDataModifier()
+ScatterDataModifier::ScatterDataModifier(Q3DScatter *scatter)
     : m_fontSize(40.0f),
       m_style(QAbstract3DSeries::MeshPoint),
       m_itemCount(lowerNumberOfItems),
       m_curveDivider(lowerCurveDivider)
 {
-    m_graph = new Q3DScatter();
+    m_graph = scatter;
 
     //  Create container window and set size policy
-    _contWind = QWidget::createWindowContainer(m_graph);
-    _contWind->setMinimumSize(QSize(200,200));
-    _contWind->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    //  Make sure to delete the object when underlying window is deleted
-    connect(_contWind, &QWidget::destroyed, this, &ScatterDataModifier::deleteLater);
+    _contWind = new QWidget();
 
-    QVBoxLayout *windMainLayout = new QVBoxLayout();
-    this->setLayout(windMainLayout);
+    //  Main vertical layout
+    QVBoxLayout *windMainLayout = new QVBoxLayout(_contWind);
+    //this->setLayout(windMainLayout);
+    this->setWidget(_contWind);
 
-    graphHeaderWidget *header = new graphHeaderWidget(3, false);
+
+    header = new graphHeaderWidget(3, false);
     windMainLayout->addLayout(header->GetLayout());
-    windMainLayout->addWidget(_contWind);
+
+    QWidget *graphCont = QWidget::createWindowContainer(m_graph);
+    graphCont->setMinimumSize(QSize(200,200));
+    graphCont->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    windMainLayout->addWidget(graphCont,1);
+
 
     //  Handle dynamic channel selection by dropdown
     QObject::connect(header, &graphHeaderWidget::UpdateInputChannels,
@@ -86,11 +89,9 @@ ScatterDataModifier::ScatterDataModifier()
     m_graph->activeTheme()->setFont(font);
     m_graph->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
     m_graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
-    //! [0]
 
-    //! [2]
-    QScatterDataProxy *proxy = new QScatterDataProxy;
-    QScatter3DSeries *series = new QScatter3DSeries(proxy);
+    QScatterDataProxy *proxy = new QScatterDataProxy(this);
+    QScatter3DSeries *series = new QScatter3DSeries(proxy, this);
     series->setItemLabelFormat(QStringLiteral("@xTitle: @xLabel @yTitle: @yLabel @zTitle: @zLabel"));
     series->setMeshSmooth(true);
     m_graph->addSeries(series);
@@ -100,7 +101,7 @@ ScatterDataModifier::ScatterDataModifier()
     m_graph->activeTheme()->setBackgroundEnabled(false);
     changeFont(QFont("Arial"));
 
-    _dataArray = new QScatterDataArray;
+    _dataArray = new QScatterDataArray();
     _dataArray->resize(m_itemCount);
 
     m_graph->seriesList().at(0)->dataProxy()->resetArray(_dataArray);
@@ -109,10 +110,25 @@ ScatterDataModifier::ScatterDataModifier()
 ScatterDataModifier::~ScatterDataModifier()
 {
     qDebug() << "Destroying the scatter plot";
-
+    //m_graph->deleteLater();
     DataMultiplexer::GetI().UnregisterGraph(this);
-    //delete _dataArray;
-    //delete m_graph;
+
+   qDebug() << "Unregistered graph, disconnecting from mux";
+
+   QObject::disconnect(DataMultiplexer::GetP(),
+                    &DataMultiplexer::ChannelsUpdated,
+                    header,
+                    &graphHeaderWidget::UpdateChannelDropdown);
+
+   QObject::disconnect(header, &graphHeaderWidget::UpdateInputChannels,
+                    this, &ScatterDataModifier::UpdateInputChannels);
+   delete header;
+
+   m_graph->seriesList().clear();
+   m_graph->close();
+   m_graph->~Q3DScatter();
+
+   qDebug() << "Deleted UI";
 }
 
 /**
@@ -153,34 +169,39 @@ void ScatterDataModifier::ReceiveData(double *data, uint8_t n)
     index = (index+1) % lowerNumberOfItems;
 }
 
-void ScatterDataModifier::addData()
-{
-    // Configure the axes according to the data
-    //! [4]
-    m_graph->axisX()->setTitle("X");
-    m_graph->axisY()->setTitle("Y");
-    m_graph->axisZ()->setTitle("Z");
-    //! [4]
+/**
+ * @brief Handle closing of this window
+ *  Instead of closing the window, simply hide it. This leaks memory but is the
+ *  only way to remove the window with crashing the app. (every time a
+ *  deconstructor is called on 3Dscatter plot, we get segmentation fault
+ * @param closeEvent
+ */
+//void ScatterDataModifier::closeEvent(QCloseEvent *closeEvent)
+//{
+//    qDebug()<<"Closing: "<<closeEvent;
 
-    //! [5]
-    QScatterDataArray *dataArray = new QScatterDataArray;
-    dataArray->resize(m_itemCount);
-    QScatterDataItem *ptrToDataArray = &dataArray->first();
-    //! [5]
+//    qDebug() << "Destroying the scatter plot";
+//    //m_graph->deleteLater();
+//    DataMultiplexer::GetI().UnregisterGraph(this);
+//   qDebug() << "Unregistered graph, disconnecting from mux";
+//   QObject::disconnect(DataMultiplexer::GetP(),
+//                    &DataMultiplexer::ChannelsUpdated,
+//                    header,
+//                    &graphHeaderWidget::UpdateChannelDropdown);
 
+//   QObject::disconnect(header, &graphHeaderWidget::UpdateInputChannels,
+//                    this, &ScatterDataModifier::UpdateInputChannels);
+//   delete header;
 
-    for (int i = 0; i < m_itemCount; i++) {
-        //ptrToDataArray->setPosition(randVector());
-        ptrToDataArray++;
-    }
+//   //m_graph->seriesList().clear();
+//   //m_graph->close();
+//   //m_graph->deleteLater();
+//   this->deleteLater();
 
-    //! [7]
-    m_graph->seriesList().at(0)->dataProxy()->resetArray(dataArray);
+//    //this->hide();
+//    //closeEvent->ignore();
+//}
 
-    //! [7]
-}
-
-//! [8]
 void ScatterDataModifier::changeStyle(int style)
 {
     QComboBox *comboBox = qobject_cast<QComboBox *>(sender());
@@ -207,5 +228,4 @@ void ScatterDataModifier::setGridEnabled(int enabled)
 {
     m_graph->activeTheme()->setGridEnabled((bool)enabled);
 }
-//! [8]
 

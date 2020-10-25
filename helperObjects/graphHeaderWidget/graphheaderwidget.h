@@ -16,6 +16,7 @@ public:
     ~graphHeaderWidget();
 
     void UpdateChannelDropdown();
+    QStringList GetChannelLabels();
 
 public slots:
 
@@ -33,10 +34,10 @@ private slots:
 private:
 
     QHBoxLayout *_controlLayout;
-    uint8_t _n;
     bool _bounded;
     std::vector<QComboBox*>inCh;
     QWidget *_parent;
+    uint8_t *_inputChannelList;
 };
 
 #endif // GRAPHHEADERWIDGET_H

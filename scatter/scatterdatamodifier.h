@@ -42,50 +42,29 @@
 
 using namespace QtDataVisualization;
 
-class ScatterDataModifier : public QMdiSubWindow
+class ScatterWindow : public QMdiSubWindow
 {
     Q_OBJECT
 public:
-    explicit ScatterDataModifier(Q3DScatter *scatter);
-    ~ScatterDataModifier() override;
+    explicit ScatterWindow();
+    ~ScatterWindow() override;
 
     void UpdateInputChannels(uint8_t *inChannels);
     void ReceiveData(double *data, uint8_t n);
-    QWidget* WindowContainer()
-    {
-        return _contWind;
-    }
-    QVBoxLayout* GetLayout()
-    {
-        return windMainLayout;
-    }
 
-    void changeStyle();
     void changeFont(const QFont &font);
-    void changeFontSize(int fontsize);
-    void setBackgroundEnabled(int enabled);
     void setGridEnabled(int enabled);
-    void toggleItemCount();
-    void start();
 
-public Q_SLOTS:
-    void changeStyle(int style);
 
 private:
-    //void closeEvent(QCloseEvent *closeEvent) override;
-
-    Q3DScatter *m_graph;
-    int m_fontSize;
-    QAbstract3DSeries::Mesh m_style;
-    int m_itemCount;
-    float m_curveDivider;
-
     QWidget *_contWind;
+    Q3DScatter *_graph;
+    QScatterDataArray *_dataArray;
+
     uint8_t _inputChannels[3];
     uint8_t _maxInChannel;
-    QScatterDataArray *_dataArray;
-    QVBoxLayout *windMainLayout;
-    graphHeaderWidget *header;
+
+    graphHeaderWidget *_header;
 };
 
 #endif

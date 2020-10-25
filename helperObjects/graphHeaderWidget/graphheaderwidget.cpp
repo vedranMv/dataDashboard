@@ -8,7 +8,7 @@
 #include <QPushButton>
 
 graphHeaderWidget::graphHeaderWidget(uint8_t chnnelNum, bool hasBoundaries)
-    : _n(chnnelNum), _bounded(hasBoundaries), _parent(nullptr)
+    : _bounded(hasBoundaries), _parent(nullptr)
 {
     _controlLayout = new QHBoxLayout();
     QVBoxLayout *chLabels = new QVBoxLayout();
@@ -18,6 +18,8 @@ graphHeaderWidget::graphHeaderWidget(uint8_t chnnelNum, bool hasBoundaries)
     _controlLayout->addLayout(chLabels);
     _controlLayout->addLayout(inChannels);
     _controlLayout->addSpacerItem(horSpacer);
+
+    _inputChannelList = new uint8_t[chnnelNum];
 
     for (uint8_t i = 0; i < chnnelNum; i++)
     {
@@ -55,19 +57,33 @@ void graphHeaderWidget::UpdateChannelDropdown()
     }
 }
 
+QStringList graphHeaderWidget::GetChannelLabels()
+{
+    QStringList retVal;
+
+    for (QComboBox* X : inCh)
+        retVal.append(X->currentText());
+
+    return retVal;
+}
+
+
 void graphHeaderWidget::ComboBoxUpdated(const int &)
 {
-    uint8_t inputChannelList[3];
+//    uint8_t inputChannelList[3];
 
+//    for (uint8_t i = 0; i < 3; i++)
+//        inputChannelList[i] = inCh[i]->currentIndex();
+
+//    emit UpdateInputChannels(inputChannelList);
     for (uint8_t i = 0; i < 3; i++)
-        inputChannelList[i] = inCh[i]->currentIndex();
+        _inputChannelList[i] = inCh[i]->currentIndex();
 
-    emit UpdateInputChannels(inputChannelList);
+    emit UpdateInputChannels(_inputChannelList);
 }
 
 graphHeaderWidget::~graphHeaderWidget()
 {
-    MainWindow::clearLayout(_controlLayout);
-
     _controlLayout->deleteLater();
+    delete [] _inputChannelList;
 }

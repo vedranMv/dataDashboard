@@ -43,92 +43,89 @@
 
 using namespace QtDataVisualization;
 
-const int lowerNumberOfItems = 10000;
-const float lowerCurveDivider = 0.75f;
+const int dataSize = 10000;
 
-ScatterDataModifier::ScatterDataModifier(Q3DScatter *scatter)
-    : m_fontSize(40.0f),
-      m_style(QAbstract3DSeries::MeshPoint),
-      m_itemCount(lowerNumberOfItems),
-      m_curveDivider(lowerCurveDivider)
+ScatterWindow::ScatterWindow()
 {
-    m_graph = scatter;
+    _graph = new Q3DScatter();
 
     //  Create container window and set size policy
     _contWind = new QWidget();
 
     //  Main vertical layout
     QVBoxLayout *windMainLayout = new QVBoxLayout(_contWind);
-    //this->setLayout(windMainLayout);
     this->setWidget(_contWind);
 
 
-    header = new graphHeaderWidget(3, false);
-    windMainLayout->addLayout(header->GetLayout());
+    _header = new graphHeaderWidget(3, false);
+    windMainLayout->addLayout(_header->GetLayout());
 
-    QWidget *graphCont = QWidget::createWindowContainer(m_graph);
+    QWidget *graphCont = QWidget::createWindowContainer(_graph);
     graphCont->setMinimumSize(QSize(200,200));
     graphCont->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     windMainLayout->addWidget(graphCont,1);
 
 
     //  Handle dynamic channel selection by dropdown
-    QObject::connect(header, &graphHeaderWidget::UpdateInputChannels,
-                     this, &ScatterDataModifier::UpdateInputChannels);
+    QObject::connect(_header, &graphHeaderWidget::UpdateInputChannels,
+                     this, &ScatterWindow::UpdateInputChannels);
 
     //  Make sure input channel dropdowns have updated list of channels
     QObject::connect(DataMultiplexer::GetP(),
                      &DataMultiplexer::ChannelsUpdated,
-                     header,
+                     _header,
                      &graphHeaderWidget::UpdateChannelDropdown);
 
-    //! [0]
-    m_graph->activeTheme()->setType(Q3DTheme::ThemeEbony);
-    QFont font = m_graph->activeTheme()->font();
-    font.setPointSize(m_fontSize);
-    m_graph->activeTheme()->setFont(font);
-    m_graph->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
-    m_graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
+    //  Stylize the graph
+    _graph->activeTheme()->setType(Q3DTheme::ThemeEbony);
+    QFont font = _graph->activeTheme()->font();
+    font.setPointSize(40.0f);
+    _graph->activeTheme()->setFont(font);
+    _graph->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
+    _graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
 
     QScatterDataProxy *proxy = new QScatterDataProxy(this);
     QScatter3DSeries *series = new QScatter3DSeries(proxy, this);
     series->setItemLabelFormat(QStringLiteral("@xTitle: @xLabel @yTitle: @yLabel @zTitle: @zLabel"));
     series->setMeshSmooth(true);
-    m_graph->addSeries(series);
-    //! [2]
-    if (m_graph->seriesList().size())
-        m_graph->seriesList().at(0)->setMesh(m_style);
-    m_graph->activeTheme()->setBackgroundEnabled(false);
+
+    //  Add data series we'll be working with
+    _graph->addSeries(series);
+    if (_graph->seriesList().size())
+        _graph->seriesList().at(0)->setMesh(QAbstract3DSeries::MeshPoint);
+    _graph->activeTheme()->setBackgroundEnabled(false);
     changeFont(QFont("Arial"));
 
     _dataArray = new QScatterDataArray();
-    _dataArray->resize(m_itemCount);
+    _dataArray->resize(dataSize);
 
-    m_graph->seriesList().at(0)->dataProxy()->resetArray(_dataArray);
+    _graph->seriesList().at(0)->dataProxy()->resetArray(_dataArray);
 }
 
-ScatterDataModifier::~ScatterDataModifier()
+/**
+ * @brief ScatterWindow::~ScatterWindow
+ */
+ScatterWindow::~ScatterWindow()
 {
     qDebug() << "Destroying the scatter plot";
-    //m_graph->deleteLater();
     DataMultiplexer::GetI().UnregisterGraph(this);
 
-   qDebug() << "Unregistered graph, disconnecting from mux";
+    qDebug() << "Unregistered graph, disconnecting from mux";
 
-   QObject::disconnect(DataMultiplexer::GetP(),
+    QObject::disconnect(DataMultiplexer::GetP(),
                     &DataMultiplexer::ChannelsUpdated,
-                    header,
+                    _header,
                     &graphHeaderWidget::UpdateChannelDropdown);
 
-   QObject::disconnect(header, &graphHeaderWidget::UpdateInputChannels,
-                    this, &ScatterDataModifier::UpdateInputChannels);
-   delete header;
+    QObject::disconnect(_header, &graphHeaderWidget::UpdateInputChannels,
+                    this, &ScatterWindow::UpdateInputChannels);
+    delete _header;
 
-   m_graph->seriesList().clear();
-   m_graph->close();
-   m_graph->~Q3DScatter();
+    _graph->seriesList().clear();
+    _graph->close();
+    _graph->~Q3DScatter();
 
-   qDebug() << "Deleted UI";
+    qDebug() << "Deleted UI";
 }
 
 /**
@@ -137,7 +134,7 @@ ScatterDataModifier::~ScatterDataModifier()
  *      selection stored in this object.
  * @param inChannels    Array of 3 input channel indexes
  */
-void ScatterDataModifier::UpdateInputChannels(uint8_t *inChannels)
+void ScatterWindow::UpdateInputChannels(uint8_t *inChannels)
 {
    _inputChannels[0] = inChannels[0];
    _inputChannels[1] = inChannels[1];
@@ -147,6 +144,11 @@ void ScatterDataModifier::UpdateInputChannels(uint8_t *inChannels)
   for (uint8_t i = 0; i < 3; i++)
       if (inChannels[i] > _maxInChannel)
           _maxInChannel = inChannels[i];
+
+  QStringList chLabels = _header->GetChannelLabels();
+  _graph->axisX()->setTitle(chLabels[0]);
+  _graph->axisY()->setTitle(chLabels[1]);
+  _graph->axisZ()->setTitle(chLabels[2]);
 }
 
 /**
@@ -155,7 +157,7 @@ void ScatterDataModifier::UpdateInputChannels(uint8_t *inChannels)
  * @param data  Array of available data
  * @param n     Size of data array
  */
-void ScatterDataModifier::ReceiveData(double *data, uint8_t n)
+void ScatterWindow::ReceiveData(double *data, uint8_t n)
 {
     static uint32_t index = 0;
     // Check if the largest index of input channels is available in the
@@ -163,69 +165,23 @@ void ScatterDataModifier::ReceiveData(double *data, uint8_t n)
     if (n < _maxInChannel)
         return;
 
-    m_graph->seriesList().at(0)->dataProxy()->insertItem(index,QScatterDataItem(QVector3D( (float)data[ _inputChannels[1] ],
-                                                         (float)data[ _inputChannels[2] ],
-                                                         (float)data[ _inputChannels[0] ])));
-    index = (index+1) % lowerNumberOfItems;
+    _graph->seriesList().at(0)->dataProxy()->insertItem(index,QScatterDataItem(QVector3D( (float)data[ _inputChannels[0] ],
+                                                         (float)data[ _inputChannels[1] ],
+                                                         (float)data[ _inputChannels[2] ])));
+    index = (index+1) % dataSize;
 }
 
-/**
- * @brief Handle closing of this window
- *  Instead of closing the window, simply hide it. This leaks memory but is the
- *  only way to remove the window with crashing the app. (every time a
- *  deconstructor is called on 3Dscatter plot, we get segmentation fault
- * @param closeEvent
- */
-//void ScatterDataModifier::closeEvent(QCloseEvent *closeEvent)
-//{
-//    qDebug()<<"Closing: "<<closeEvent;
 
-//    qDebug() << "Destroying the scatter plot";
-//    //m_graph->deleteLater();
-//    DataMultiplexer::GetI().UnregisterGraph(this);
-//   qDebug() << "Unregistered graph, disconnecting from mux";
-//   QObject::disconnect(DataMultiplexer::GetP(),
-//                    &DataMultiplexer::ChannelsUpdated,
-//                    header,
-//                    &graphHeaderWidget::UpdateChannelDropdown);
-
-//   QObject::disconnect(header, &graphHeaderWidget::UpdateInputChannels,
-//                    this, &ScatterDataModifier::UpdateInputChannels);
-//   delete header;
-
-//   //m_graph->seriesList().clear();
-//   //m_graph->close();
-//   //m_graph->deleteLater();
-//   this->deleteLater();
-
-//    //this->hide();
-//    //closeEvent->ignore();
-//}
-
-void ScatterDataModifier::changeStyle(int style)
-{
-    QComboBox *comboBox = qobject_cast<QComboBox *>(sender());
-    if (comboBox) {
-        m_style = QAbstract3DSeries::Mesh(comboBox->itemData(style).toInt());
-        if (m_graph->seriesList().size())
-            m_graph->seriesList().at(0)->setMesh(m_style);
-    }
-}
-
-void ScatterDataModifier::changeFont(const QFont &font)
+void ScatterWindow::changeFont(const QFont &font)
 {
     QFont newFont = font;
-    newFont.setPointSizeF(m_fontSize);
-    m_graph->activeTheme()->setFont(newFont);
+    newFont.setPointSizeF(40.0f);
+    _graph->activeTheme()->setFont(newFont);
 }
 
-void ScatterDataModifier::setBackgroundEnabled(int enabled)
-{
-    m_graph->activeTheme()->setBackgroundEnabled((bool)enabled);
-}
 
-void ScatterDataModifier::setGridEnabled(int enabled)
+void ScatterWindow::setGridEnabled(int enabled)
 {
-    m_graph->activeTheme()->setGridEnabled((bool)enabled);
+    _graph->activeTheme()->setGridEnabled((bool)enabled);
 }
 

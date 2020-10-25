@@ -29,13 +29,14 @@ signals:
 
 private slots:
     void ComboBoxUpdated(const int &);
-private:
 
+private:
 
     QHBoxLayout *_controlLayout;
     uint8_t _n;
     bool _bounded;
     std::vector<QComboBox*>inCh;
+    QWidget *_parent;
 };
 
 #endif // GRAPHHEADERWIDGET_H

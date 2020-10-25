@@ -1,13 +1,14 @@
 #include "graphheaderwidget.h"
 #include "helperObjects/dataMultiplexer/datamultiplexer.h"
+#include <mainwindow.h>
 
 #include <QWidget>
 #include <QLabel>
 #include <QObject>
-
+#include <QPushButton>
 
 graphHeaderWidget::graphHeaderWidget(uint8_t chnnelNum, bool hasBoundaries)
-    : _n(chnnelNum), _bounded(hasBoundaries)
+    : _n(chnnelNum), _bounded(hasBoundaries), _parent(nullptr)
 {
     _controlLayout = new QHBoxLayout();
     QVBoxLayout *chLabels = new QVBoxLayout();
@@ -51,7 +52,6 @@ void graphHeaderWidget::UpdateChannelDropdown()
         int newIndex = X->findText(currentItem);
         if (newIndex >= 0)
             X->setCurrentIndex(newIndex);
-
     }
 }
 
@@ -67,13 +67,7 @@ void graphHeaderWidget::ComboBoxUpdated(const int &)
 
 graphHeaderWidget::~graphHeaderWidget()
 {
-    //  Deletion of object is called from MainWindow
-    //  Here we only need to delete the layout
-    while (QLayoutItem* item = _controlLayout->takeAt(0))
-    {
-        if (QWidget* widget = item->widget())
-            widget->deleteLater();
-        delete item;
-    }
+    MainWindow::clearLayout(_controlLayout);
+
     _controlLayout->deleteLater();
 }

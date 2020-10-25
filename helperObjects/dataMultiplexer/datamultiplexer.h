@@ -77,11 +77,13 @@ public:
 
     OrientationWidget* Receiver(OrientationWidget* dummy=0)
     {
+        qDebug()<<"Asked for 3d receiver";
         return _reciver3D;
     }
 
     ScatterDataModifier* Receiver(ScatterDataModifier* dummy=0)
     {
+        qDebug()<<"Asked for scatter receiver";
         return _receiverScatter;
     }
 
@@ -161,13 +163,6 @@ signals:
 
 public slots:
 
-
-
-//    void RegisterMathChannel(uint8_t channelId,
-//                             QString label,
-//                             uint8_t *operations,
-//                             uint8_t *serialChannels,
-//                             uint8_t n);
     void RegisterMathChannel(uint8_t channelId,
                              MathChannel *mc);
     void UnegisterMathChannel(uint8_t channelId);
@@ -178,7 +173,7 @@ public slots:
 private:
         DataMultiplexer();
         ~DataMultiplexer();
-        void ComputeMathChannels();
+        void _ComputeMathChannels();
         void _InternalChannelUpdate();
 
         void run() override;
@@ -186,13 +181,10 @@ private:
 
         char _SerialframeFormat[3];
 
-        double *_Serialdata;
-        double _MathData[7];
-
         double *_channelData;
         uint8_t _channelCount[4];
 
-        MathChannel _mChannel[7];
+        MathChannel* _mChannel[7];
         std::vector<QString>_SerialLabels;
         std::vector<GraphClient*>_Graphs;
 

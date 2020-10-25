@@ -15,6 +15,9 @@ DataMultiplexer* DataMultiplexer::GetP()
 DataMultiplexer::DataMultiplexer(): _threadQuit(false)
 {
     _SerialdataReady.release();
+
+    for (uint8_t i=0; i < 7; i++)
+        _mChannel[i] = new MathChannel();
 }
 
 DataMultiplexer::~DataMultiplexer()
@@ -22,6 +25,11 @@ DataMultiplexer::~DataMultiplexer()
     //  Pass kill signal to the thread and wait for it to terminate
     _threadQuit = true;
     wait();
+
+    for (uint8_t i=0; i < 7; i++)
+        delete _mChannel[i];
+
+    delete [] _channelData;
 }
 
 /**
@@ -66,18 +74,24 @@ void DataMultiplexer::RegisterSerialCh(uint8_t n, QString *chName)
 void DataMultiplexer::RegisterMathChannel(uint8_t channelId,
                                           MathChannel *mc)
 {
+    qDebug()<<"Registering channel "<<channelId;
+    _threadQuit = true;
+    wait();
+
     //  Clean up old variable
-    _mChannel[channelId-1].Clear();
+    delete _mChannel[channelId-1];
 
     //  Move new data in
-    _mChannel[channelId-1] = *mc;
+    _mChannel[channelId-1] = mc;
     //  Enable math channel
-    _mChannel[channelId-1].Enabled = true;
+    _mChannel[channelId-1]->Enabled = true;
     _channelCount[SignalSource::MathSignal]++;
 
     _InternalChannelUpdate();
     emit ChannelsUpdated();
 
+    qDebug()<<"Finished registering channel "<<channelId;
+    _threadQuit = false;
 }
 
 /**
@@ -86,11 +100,18 @@ void DataMultiplexer::RegisterMathChannel(uint8_t channelId,
  */
 void DataMultiplexer::UnegisterMathChannel(uint8_t channelId)
 {
-    _mChannel[channelId-1].Clear();
+    qDebug()<<"Unregistering channel "<<channelId;
+    _threadQuit = true;
+    wait();
+
+    _mChannel[channelId-1]->Clear();
     _channelCount[SignalSource::MathSignal]--;
 
     _InternalChannelUpdate();
     emit ChannelsUpdated();
+
+    qDebug()<<"Finished unregistering channel "<<channelId;
+    _threadQuit = false;
 }
 
 /**
@@ -105,9 +126,9 @@ QStringList DataMultiplexer::GetChannelList()
     for (QString &X : _SerialLabels)
         retVal.append(X);
 
-    for (MathChannel &X : _mChannel)
-        if (X.Enabled)
-            retVal.append(X.GetLabel());
+    for (MathChannel* X : _mChannel)
+        if (X->Enabled)
+            retVal.append(X->GetLabel());
 
    qDebug() << retVal;
 
@@ -126,18 +147,23 @@ void DataMultiplexer::_InternalChannelUpdate()
         wait();
     }
 
-    //  If _channelData has been initialized before, delete it first
-    if (_channelCount[SignalSource::AllChannels] != 0)
-        delete [] _channelData;
+    qDebug()<<"Deleting channel list of size "<<_channelCount[SignalSource::AllChannels];
 
+    //  TODO: This breaks heap boundary when ran with active serial port?
+    //  If _channelData has been initialized before, delete it first
+//    if (_channelCount[SignalSource::AllChannels] != 0)
+//        delete [] _channelData;
+
+
+    qDebug()<<"Recomputing channel count";
     //  Compute new number total of channels
     _channelCount[SignalSource::AllChannels] =
             _channelCount[SignalSource::SerialSignal] +
             _channelCount[SignalSource::MathSignal];
 
+    qDebug()<<"Allocating "<< _channelCount[SignalSource::AllChannels]<< " new channel array";
     //  Allocate data array for all current channels
     _channelData = new double[_channelCount[SignalSource::AllChannels]];
-
 }
 
 /**
@@ -205,24 +231,24 @@ void DataMultiplexer::UnregisterGraph(ScatterDataModifier* reciver)
 /**
  * @brief DataMultiplexer::ComputeMathChannels
  */
-void DataMultiplexer::ComputeMathChannels()
+void DataMultiplexer::_ComputeMathChannels()
 {
     for (uint8_t i = 0; i < 6; i++)
     {
         //  Skip channel if it's not enabled
-        if (!_mChannel[i].Enabled)
+        if (!_mChannel[i]->Enabled)
             continue;
 
         //  Math channels are offset by the count of serial channels
         _channelData[ _channelCount[SignalSource::SerialSignal] + i] = 0;
 
-        for (uint8_t j = 0; j < _mChannel[i]._component.size(); j++)
-            if (std::get<0>(_mChannel[i]._component[j]) == MathOperation::Add_Signal)
+        for (uint8_t j = 0; j < _mChannel[i]->_component.size(); j++)
+            if (std::get<0>(_mChannel[i]->_component[j]) == MathOperation::Add_Signal)
                 _channelData[ _channelCount[SignalSource::SerialSignal] + i] += \
-                        _channelData[ std::get<1>(_mChannel[i]._component[j]) ];
-        else if (std::get<0>(_mChannel[i]._component[j]) == MathOperation::Subtract_Signal)
+                        _channelData[ std::get<1>(_mChannel[i]->_component[j]) ];
+        else if (std::get<0>(_mChannel[i]->_component[j]) == MathOperation::Subtract_Signal)
                 _channelData[ _channelCount[SignalSource::SerialSignal] + i] -= \
-                        _channelData[ std::get<1>(_mChannel[i]._component[j]) ];
+                        _channelData[ std::get<1>(_mChannel[i]->_component[j]) ];
     }
 }
 
@@ -236,9 +262,11 @@ void DataMultiplexer::ReceiveSerialData(const QString &buffer)
     _SerialdataReady.acquire(1);
     _buffer = buffer;
 
-    if (!isRunning())
+    if (!isRunning() && !_threadQuit)
     {
-        _threadQuit = false;
+        //  External process use this flag to control thread, avoid
+        //  forcing its value here
+        //_threadQuit = false;
         start();
     }
 
@@ -253,6 +281,7 @@ void DataMultiplexer::ReceiveSerialData(const QString &buffer)
  */
 void DataMultiplexer::run()
 {
+    qDebug()<<"Data thread started";
     while (!_threadQuit)
     {
         if (!_SerialdataReady.tryAcquire(2,1))
@@ -321,17 +350,18 @@ void DataMultiplexer::run()
                 }
             }
 
-            ComputeMathChannels();
+            _ComputeMathChannels();
             //  Update graphs
             for (GraphClient* X : _Graphs)
                 X->SendData(_channelCount[SignalSource::AllChannels], _channelData);
 
-            for (uint8_t i = 0; i < _channelCount[0]; i++)
-                qDebug()<<_channelCount[0]<<":"<<_channelData[0]<<","<<_channelData[1]<<","<<_channelData[2]<<"," \
-                        <<_channelData[3]<<","<<_channelData[4];
+//            for (uint8_t i = 0; i < _channelCount[0]; i++)
+//                qDebug()<<_channelCount[0]<<":"<<_channelData[0]<<","<<_channelData[1]<<","<<_channelData[2]<<"," \
+//                        <<_channelData[3]<<","<<_channelData[4];
         }
 end_goto:
         _SerialdataReady.release(1);
 
     }
+    qDebug()<<"Data thread stopped";
 }

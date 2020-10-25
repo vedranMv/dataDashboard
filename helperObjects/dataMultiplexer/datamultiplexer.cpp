@@ -174,7 +174,7 @@ void DataMultiplexer::_InternalChannelUpdate()
  */
 void DataMultiplexer::RegisterGraph(QString name,
                                 uint8_t nInChannels,
-                                OrientationWidget* receiver)
+                                OrientationWindow* receiver)
 {
     _Graphs.push_back(new GraphClient(name,nInChannels,receiver));
     emit logLine("Registered graph "+name);
@@ -188,7 +188,7 @@ void DataMultiplexer::RegisterGraph(QString name,
  */
 void DataMultiplexer::RegisterGraph(QString name,
                                 uint8_t nInChannels,
-                                ScatterDataModifier* receiver)
+                                ScatterWindow* receiver)
 {
     _Graphs.push_back(new GraphClient(name,nInChannels,receiver));
     emit logLine("Registered graph "+name);
@@ -198,7 +198,7 @@ void DataMultiplexer::RegisterGraph(QString name,
  * @brief DataMultiplexer::UnregisterGraph
  * @param reciver
  */
-void DataMultiplexer::UnregisterGraph(OrientationWidget* reciver)
+void DataMultiplexer::UnregisterGraph(OrientationWindow* reciver)
 {
     QString name("");
     for (uint8_t i = 0; i < _Graphs.size(); i++)
@@ -213,7 +213,7 @@ void DataMultiplexer::UnregisterGraph(OrientationWidget* reciver)
     emit logLine("Unregistered graph "+name);
 }
 
-void DataMultiplexer::UnregisterGraph(ScatterDataModifier* reciver)
+void DataMultiplexer::UnregisterGraph(ScatterWindow* reciver)
 {
     QString name("");
     for (uint8_t i = 0; i < _Graphs.size(); i++)

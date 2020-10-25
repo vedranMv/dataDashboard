@@ -12,8 +12,9 @@
 #include <QString>
 #include <vector>
 #include <tuple>
+#include <QThread>
 
-#include <orientation_3d/orientationwidget.h>
+#include <orientation_3d/orientationwindow.h>
 #include <scatter/scatterdatamodifier.h>
 
 enum SignalSource {
@@ -39,10 +40,10 @@ class GraphClient
 {
     friend class DataMultiplexer;
 public:
-    GraphClient(QString name, uint8_t nInChannels, OrientationWidget* reciver) \
+    GraphClient(QString name, uint8_t nInChannels, OrientationWindow* reciver) \
         :_name(name), _inChannels(nInChannels), _reciver3D(reciver)
     { _type = GraphType::Orientation3D; }
-    GraphClient(QString name, uint8_t nInChannels, ScatterDataModifier* reciver) \
+    GraphClient(QString name, uint8_t nInChannels, ScatterWindow* reciver) \
         :_name(name), _inChannels(nInChannels), _receiverScatter(reciver)
     { _type = GraphType::Scatter; }
 
@@ -75,14 +76,16 @@ public:
         return _name;
     }
 
-    OrientationWidget* Receiver(OrientationWidget* dummy=0)
+    OrientationWindow* Receiver(OrientationWindow* dummy=0)
     {
+        assert(dummy==dummy);
         qDebug()<<"Asked for 3d receiver";
         return _reciver3D;
     }
 
-    ScatterDataModifier* Receiver(ScatterDataModifier* dummy=0)
+    ScatterWindow* Receiver(ScatterWindow* dummy=0)
     {
+        assert(dummy==dummy);
         qDebug()<<"Asked for scatter receiver";
         return _receiverScatter;
     }
@@ -92,8 +95,8 @@ private:
     GraphType _type;
     QString _name;
     uint8_t _inChannels;
-    OrientationWidget* _reciver3D;
-    ScatterDataModifier* _receiverScatter;
+    OrientationWindow* _reciver3D;
+    ScatterWindow* _receiverScatter;
     std::vector<uint8_t>_inputChannelMap;
 };
 
@@ -149,13 +152,13 @@ public:
 
     void RegisterGraph(QString name,
                        uint8_t nInChannels,
-                       OrientationWidget* reciver);
+                       OrientationWindow* reciver);
     void RegisterGraph(QString name,
                        uint8_t nInChannels,
-                       ScatterDataModifier *receiver);
+                       ScatterWindow *receiver);
 
-    void UnregisterGraph(OrientationWidget* reciver);
-    void UnregisterGraph(ScatterDataModifier* reciver);
+    void UnregisterGraph(OrientationWindow* reciver);
+    void UnregisterGraph(ScatterWindow* reciver);
 
 signals:
     void logLine(const QString &s);

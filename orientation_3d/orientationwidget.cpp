@@ -56,55 +56,14 @@
 
 #include <cmath>
 
-
-
 OrientationWidget::~OrientationWidget()
 {
     // Make sure the context is current when deleting the texture
     // and the buffers.
-    DataMultiplexer::GetI().UnregisterGraph(this);
     makeCurrent();
     delete texture;
     delete geometries;
     doneCurrent();
-}
-
-/**
- * @brief Function directly called by the multiplexer to push data into
- *      the graph
- * @param data  Array of available data
- * @param n     Size of data array
- */
-void OrientationWidget::ReceiveData(double *data, uint8_t n)
-{
-    // Check if the largest index of input channels is available in the
-    // received block of data
-    if (n < _maxInChannel)
-        return;
-
-    // Update rotation
-   rotation = QQuaternion::fromEulerAngles( (float)data[ _inputChannels[1] ],
-                                            (float)data[ _inputChannels[2] ],
-                                            (float)data[ _inputChannels[0] ]);
-   update();
-}
-
-/**
- * @brief [Slot] Function that is called whenever input channel has been
- *      changed in the dropdown fields of the header. It updates the channel
- *      selection stored in this object.
- * @param inChannels    Array of 3 input channel indexes
- */
-void OrientationWidget::UpdateInputChannels(uint8_t *inChannels)
-{
-   _inputChannels[0] = inChannels[0];
-   _inputChannels[1] = inChannels[1];
-   _inputChannels[2] = inChannels[2];
-
-  _maxInChannel = 0;
-  for (uint8_t i = 0; i < 3; i++)
-      if (inChannels[i] > _maxInChannel)
-          _maxInChannel = inChannels[i];
 }
 
 void OrientationWidget::initializeGL()
@@ -123,7 +82,6 @@ void OrientationWidget::initializeGL()
     // Enable back face culling
     glEnable(GL_CULL_FACE);
 //! [2]
-
     geometries = new GeometryEngine;
     update();
 }
@@ -192,6 +150,7 @@ void OrientationWidget::paintGL()
     texture->bind();
 
 //! [6]
+
     // Calculate model view transformation
     QMatrix4x4 matrix;
     matrix.translate(0.0, 0.0, -5.0);

@@ -25,6 +25,7 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    static void clearLayout(QLayout* layout, bool deleteWidgets = true);
 
 public Q_SLOTS:
     void logLine(const QString &line);
@@ -52,7 +53,7 @@ private slots:
 
 private:
     void LoadSettings();
-    void clearLayout(QLayout* layout, bool deleteWidgets = true);
+
     void RegisterMathChannel(uint8_t chID);
 
     Ui::MainWindow *ui;
@@ -68,6 +69,7 @@ private:
 
     std::vector<QCheckBox*>mathChEnabled;
     std::vector<QLineEdit*>mathChName;
+    std::vector<Q3DScatter*>plots;
 };
 
 #endif // MAINWINDOW_H

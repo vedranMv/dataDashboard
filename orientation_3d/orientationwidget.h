@@ -61,12 +61,12 @@
 #include <QSemaphore>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLTexture>
-#include <QThread>
 
 class GeometryEngine;
 
 class OrientationWidget : public QOpenGLWidget, public QOpenGLFunctions
 {
+    friend class OrientationWindow;
     Q_OBJECT
 
 public:
@@ -74,11 +74,6 @@ public:
     ~OrientationWidget();
 
      QQuaternion rotation;
-
-     void ReceiveData(double *data, uint8_t n);
-
-public slots:
-     void UpdateInputChannels(uint8_t *inChannels);
 
 protected:
     void initializeGL() override;
@@ -89,15 +84,10 @@ protected:
     void initTextures();
 
 private:
-
     QOpenGLShaderProgram program;
     GeometryEngine *geometries = nullptr;
-
     QOpenGLTexture *texture = nullptr;
-
     QMatrix4x4 projection;
-    uint8_t _inputChannels[3];
-    uint8_t _maxInChannel;
 };
 
 

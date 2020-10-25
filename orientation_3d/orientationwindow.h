@@ -11,14 +11,19 @@ class OrientationWindow : public QMdiSubWindow
 {
 public:
     OrientationWindow(QWidget *parent);
+    ~OrientationWindow();
 
-    void UpdateInputChannels(uint8_t *inChannels);
     void ReceiveData(double *data, uint8_t n);
 
+public slots:
+    void UpdateInputChannels(uint8_t *inChannels);
 
 private:
-    QWidget *_contWind;
-
+    QWidget             *_contWind;
+    graphHeaderWidget   *_header;
+    OrientationWidget   *_widget3d;
+    uint8_t             _inputChannels[3];
+    uint8_t             _maxInChannel;
 };
 
 #endif // ORIENTATIONWINDOW_H

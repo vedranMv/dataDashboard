@@ -5,6 +5,7 @@
 #include "scatter/scatterdatamodifier.h"
 #include "orientation_3d/orientationwidget.h"
 #include "helperObjects/graphHeaderWidget/graphheaderwidget.h"
+#include "orientation_3d/orientationwindow.h"
 
 #include <QApplication>
 #include <QLabel>
@@ -23,6 +24,7 @@
 #include <QtWidgets/QMessageBox>
 #include <QtGui/QScreen>
 #include <QtGui/QFontDatabase>
+#include <QMdiSubWindow>
 
 #include <QSerialPortInfo>
 
@@ -146,7 +148,14 @@ MainWindow::~MainWindow()
 
     settings->sync();
 
+    for (Channel *X : ch)
+        delete X;
     ch.clear();
+
+    for (UIMathChannelComponent *X : mathComp)
+        delete X;
+    mathComp.clear();
+
 
     delete ui;
 }
@@ -335,7 +344,11 @@ void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
         if (deleteWidgets)
         {
             if (QWidget* widget = item->widget())
+            {
+                qDebug()<<"Deleting "<<widget->objectName();
                 widget->deleteLater();
+                qDebug()<<"Done";
+            }
         }
         if (QLayout* childLayout = item->layout())
             clearLayout(childLayout, deleteWidgets);
@@ -492,55 +505,42 @@ void MainWindow::on_delete_updateMathComp(uint8_t id)
 void MainWindow::on_add3D_clicked()
 {
     static uint8_t _3DgraphCount = 0;
-    QWidget *orient3DWindow = new QWidget();
-    OrientationWidget *tmp = new OrientationWidget();
+    QString winID = QString::number(_3DgraphCount);
 
-    QVBoxLayout *windMainLayout = new QVBoxLayout();
-    orient3DWindow->setLayout(windMainLayout);
+    OrientationWindow *orient3DWindow = new OrientationWindow(this);
+    QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(orient3DWindow);
 
+    plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
+    plotWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+    plotWindow->setWindowTitle("3D Orientation " + winID);
 
-    graphHeaderWidget *header = new graphHeaderWidget(3, false);
-    windMainLayout->addLayout(header->GetLayout());
-    windMainLayout->addWidget(tmp);
-
-    //  Make sure input channel dropdowns have updated list of channels
-    QObject::connect(mux,
-                     &DataMultiplexer::ChannelsUpdated,
-                     header,
-                     &graphHeaderWidget::UpdateChannelDropdown);
-    //  Handle dynamic channel selection by dropdown
-    QObject::connect(header, &graphHeaderWidget::UpdateInputChannels,
-                     tmp, &OrientationWidget::UpdateInputChannels);
-
-
-    tmp->setMinimumSize(QSize(200,200));
-    tmp->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    ui->mdiArea->addSubWindow(orient3DWindow);
-    tmp->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
-    tmp->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
-    tmp->parentWidget()->setWindowTitle("3D Orientation " + QString::number(_3DgraphCount));
-
-    mux->RegisterGraph("3D Orientation " + QString::number(_3DgraphCount), 3, tmp);
-
-    tmp->parentWidget()->show();
+    plotWindow->show();
     _3DgraphCount++;
+
+    mux->RegisterGraph("3D Orientation " + winID, 3, orient3DWindow);
+
 }
 
+/**
+ * @brief Create new scatter graph
+ */
 void MainWindow::on_addScatter_clicked()
 {
     static uint8_t _ScatterCount = 0;
+    QString winID = QString::number(_ScatterCount);
+
     //  Create scatter plot
-    ScatterDataModifier *scatterWindow = new ScatterDataModifier();
+    ScatterWindow *scatterWindow = new ScatterWindow();
+    QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(scatterWindow);
 
-    ui->mdiArea->addSubWindow(scatterWindow);
-    scatterWindow->parentWidget()->setWindowFlags(Qt::WindowCloseButtonHint);
-    scatterWindow->parentWidget()->setAttribute(Qt::WA_DeleteOnClose, true);
-    scatterWindow->parentWidget()->setWindowTitle("3D Orientation " + QString::number(_ScatterCount));
+    plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
+    plotWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+    plotWindow->setWindowTitle("Scatter " + winID);
 
-    mux->RegisterGraph("Scatter " + QString::number(_ScatterCount), 3, scatterWindow);
-
-    scatterWindow->parentWidget()->show();
+    plotWindow->show();
     _ScatterCount++;
+
+    mux->RegisterGraph("Scatter " + winID, 3, scatterWindow);
+
 }
 

@@ -15,7 +15,7 @@
 #include <QThread>
 
 #include <orientation_3d/orientationwindow.h>
-#include <scatter/scatterdatamodifier.h>
+#include <scatter/scatterwindow.h>
 
 enum SignalSource {
     AllChannels,

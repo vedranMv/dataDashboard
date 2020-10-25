@@ -18,7 +18,7 @@ target.path = ./build/$$TARGET
 INSTALLS += target
 
 
-SOURCES += main.cpp scatter/scatterdatamodifier.cpp \
+SOURCES += main.cpp scatter/scatterwindow.cpp \
         helperObjects/channel/channel.cpp \
         helperObjects/dataMultiplexer/datamultiplexer.cpp \
         helperObjects/graphHeaderWidget/graphheaderwidget.cpp \
@@ -32,7 +32,7 @@ SOURCES += main.cpp scatter/scatterdatamodifier.cpp \
         serialadapter/serialadapter.cpp
 
 
-HEADERS += scatter/scatterdatamodifier.h \
+HEADERS += scatter/scatterwindow.h \
     helperObjects/channel/channel.h \
     helperObjects/dataMultiplexer/datamultiplexer.h \
     helperObjects/graphHeaderWidget/graphheaderwidget.h \
@@ -41,7 +41,6 @@ HEADERS += scatter/scatterdatamodifier.h \
     line/qcustomplot.h \
     mainwindow.h \
     orientation_3d/orientationwindow.h \
-           scatter/ScatterDataPlot.h \
     orientation_3d/orientationwidget.h \
     orientation_3d/geometryengine.h \
     serialAdapter/serialAdapter.h

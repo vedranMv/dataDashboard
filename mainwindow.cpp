@@ -2,7 +2,7 @@
 #include "ui_mainwindow.h"
 
 
-#include "scatter/scatterdatamodifier.h"
+#include "scatter/scatterwindow.h"
 #include "orientation_3d/orientationwidget.h"
 #include "helperObjects/graphHeaderWidget/graphheaderwidget.h"
 #include "orientation_3d/orientationwindow.h"

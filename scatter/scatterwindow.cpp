@@ -27,7 +27,7 @@
 **
 ****************************************************************************/
 
-#include "scatterdatamodifier.h"
+#include "scatterwindow.h"
 #include <QtDataVisualization/qscatterdataproxy.h>
 #include <QtDataVisualization/qvalue3daxis.h>
 #include <QtDataVisualization/q3dscene.h>

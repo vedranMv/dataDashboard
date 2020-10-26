@@ -123,7 +123,8 @@ ScatterWindow::~ScatterWindow()
 
     _graph->seriesList().clear();
     _graph->close();
-    _graph->~Q3DScatter();
+    //  Uncomment next line to prevent segfault
+    //_graph->~Q3DScatter();
 
     qDebug() << "Deleted UI";
 }

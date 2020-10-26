@@ -37,13 +37,15 @@
 #include <QtCore/qmath.h>
 #include <QtCore/qrandom.h>
 #include <QtWidgets/QComboBox>
+#include <QLabel>
+#include <QString>
 
 #include <helperObjects/dataMultiplexer/datamultiplexer.h>
 #include <mainwindow.h>
 
 using namespace QtDataVisualization;
 
-const int dataSize = 10000;
+int dataSize = 10000;
 
 ScatterWindow::ScatterWindow()
 {
@@ -59,6 +61,26 @@ ScatterWindow::ScatterWindow()
 
     _header = new graphHeaderWidget(3, false);
     windMainLayout->addLayout(_header->GetLayout());
+
+    //  Expand header with scatter-specific fields
+    QVBoxLayout *scatterSpecific = new QVBoxLayout();
+    _header->GetLayout()->addLayout(scatterSpecific);
+
+    //  Data size line edit
+    scatterSpecific->addWidget(new QLabel("Data size (automatically updated)"));
+    QLineEdit *dataSizeLE = new QLineEdit();
+    dataSizeLE->setValidator( new QIntValidator(1, dataSize*10, this) );
+    dataSizeLE->setText(QString::number(dataSize));
+    QObject::connect(dataSizeLE, &QLineEdit::textChanged,
+                     this, &ScatterWindow::on_dataSize_changed);
+    scatterSpecific->addWidget(dataSizeLE);
+    //  Reset data set push button
+    QPushButton *resetView = new QPushButton();
+    resetView->setText("Reset data");
+    QObject::connect(resetView, &QPushButton::pressed,
+                     this, &ScatterWindow::on_resetData_pressed);
+    scatterSpecific->addWidget(resetView);
+
 
     QWidget *graphCont = QWidget::createWindowContainer(_graph);
     graphCont->setMinimumSize(QSize(200,200));
@@ -165,7 +187,7 @@ void ScatterWindow::ReceiveData(double *data, uint8_t n)
     if (n < _maxInChannel)
         return;
 
-    _graph->seriesList().at(0)->dataProxy()->insertItem(index,QScatterDataItem(QVector3D( (float)data[ _inputChannels[0] ],
+    _graph->seriesList().at(0)->dataProxy()->setItem(index,QScatterDataItem(QVector3D( (float)data[ _inputChannels[0] ],
                                                          (float)data[ _inputChannels[1] ],
                                                          (float)data[ _inputChannels[2] ])));
     index = (index+1) % dataSize;
@@ -185,3 +207,25 @@ void ScatterWindow::setGridEnabled(int enabled)
     _graph->activeTheme()->setGridEnabled((bool)enabled);
 }
 
+/**
+ * @brief [Slot] Handles change in data size line edit
+ * @param _datasize Current text of line edit
+ */
+void ScatterWindow::on_dataSize_changed(const QString &_datasize)
+{
+    //  Safe to assign, validation rule defined in the constructor
+    dataSize = _datasize.toInt();
+
+    _dataArray->resize(dataSize);
+    _graph->seriesList().at(0)->dataProxy()->resetArray(_dataArray);
+}
+
+/**
+ * @brief [Slot] Handles press of a 'Reset data button'
+ */
+void ScatterWindow::on_resetData_pressed()
+{
+    _dataArray->clear();
+    _dataArray->resize(dataSize);
+    _graph->seriesList().at(0)->dataProxy()->resetArray(_dataArray);
+}

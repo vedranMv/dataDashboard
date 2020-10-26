@@ -55,6 +55,9 @@ public:
     void changeFont(const QFont &font);
     void setGridEnabled(int enabled);
 
+public slots:
+    void on_dataSize_changed(const QString &datasize);
+    void on_resetData_pressed();
 
 private:
     QWidget *_contWind;

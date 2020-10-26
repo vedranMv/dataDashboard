@@ -114,6 +114,9 @@ MainWindow::MainWindow(QWidget *parent) :
  */
 MainWindow::~MainWindow()
 {
+    //  Disable all signals
+    this->disconnect(this);
+
     //  Save port options
     settings->setValue("port/name", ui->portSelector->itemText(ui->portSelector->currentIndex()));
     settings->setValue("port/baud", ui->portBaud->itemText(ui->portBaud->currentIndex()));

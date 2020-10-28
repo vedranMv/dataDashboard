@@ -51,6 +51,10 @@ private slots:
 
     void on_addScatter_clicked();
 
+    void on_fileloggingEnabled_stateChanged(int arg1);
+
+    void on_logfilePathDialog_clicked();
+
 private:
     void LoadSettings();
 

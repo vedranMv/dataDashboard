@@ -25,6 +25,7 @@
 #include <QtGui/QScreen>
 #include <QtGui/QFontDatabase>
 #include <QMdiSubWindow>
+#include <QFileDialog>
 
 #include <QSerialPortInfo>
 
@@ -145,6 +146,12 @@ MainWindow::~MainWindow()
         if (mathChEnabled[i]->isChecked())
             settings->setValue("math/channel"+QString::number(i+1)+"name",mathChName[i]->text());
 
+    //  Save file logging settings to file
+    settings->setValue("fileLogging/append",  ui->appendButton->isChecked());
+    settings->setValue("fileLogging/folder",  ui->logfilePath->text());
+    settings->setValue("fileLogging/fileName",  ui->logfileName->text());
+    settings->setValue("fileLogging/channelSeparator",  ui->logfileChSep->text());
+
 
     settings->sync();
 
@@ -186,6 +193,13 @@ void MainWindow::LoadSettings()
     uint8_t mathComponentCount = settings->value("math/componentCount","0").toUInt();
     for (uint8_t i = 0; i < mathComponentCount; i++)
         on_addMathComp_clicked();
+
+    //  Load file logging settings
+    ui->appendButton->setChecked(settings->value("fileLogging/append","true").toBool());
+    ui->overwriteButton->setChecked(!settings->value("fileLogging/append","true").toBool());
+    ui->logfilePath->setText(settings->value("fileLogging/folder","").toString());
+    ui->logfileName->setText(settings->value("fileLogging/fileName","").toString());
+    ui->logfileChSep->setText(settings->value("fileLogging/channelSeparator",",").toString());
 }
 
 /**
@@ -233,7 +247,7 @@ void MainWindow::toggleConnection()
         dataAdapter->updatePort(ui->portSelector->itemText(ui->portSelector->currentIndex()), \
                                 ui->portBaud->itemText(ui->portBaud->currentIndex()));
         //  Prevent edits to serial port while connection is open
-        ui->serialconfTab->setEnabled(false);
+        ui->serialGroup->setEnabled(false);
         //  Rename the button
         ui->connectButton->setText("Disconnect");
 
@@ -242,7 +256,7 @@ void MainWindow::toggleConnection()
     }
     else if (ui->connectButton->text() == "Disconnect")
     {
-        ui->serialconfTab->setEnabled(true);
+        ui->serialGroup->setEnabled(true);
         ui->connectButton->setText("Connect");
 
         dataAdapter->stopThread();
@@ -345,9 +359,7 @@ void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
         {
             if (QWidget* widget = item->widget())
             {
-                qDebug()<<"Deleting "<<widget->objectName();
                 widget->deleteLater();
-                qDebug()<<"Done";
             }
         }
         if (QLayout* childLayout = item->layout())
@@ -413,7 +425,7 @@ void MainWindow::on_addMathComp_clicked()
 void MainWindow::UpdateAvailMathCh()
 {
     //  List of channels currently enabled, to be passed to QComboBoxes
-    //  in math components list
+    //  in math components list -> not used for now
     int mathCh[6] = {0};
     int count = 0;
 
@@ -544,3 +556,42 @@ void MainWindow::on_addScatter_clicked()
 
 }
 
+
+void MainWindow::on_logfilePathDialog_clicked()
+{
+    QString saveDir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
+                                                 "/home",
+                                                 QFileDialog::ShowDirsOnly
+                                                 | QFileDialog::DontResolveSymlinks);
+    ui->logfilePath->setText(saveDir);
+}
+
+void MainWindow::on_fileloggingEnabled_stateChanged(int arg1)
+{
+    if (arg1 != Qt::Unchecked)
+    {
+        ui->overwriteButton->setEnabled(false);
+        ui->appendButton->setEnabled(false);
+        ui->logfilePathDialog->setEnabled(false);
+        ui->logfilePath->setEnabled(false);
+        ui->logfileName->setEnabled(false);
+        ui->logfileChSep->setEnabled(false);
+        //  Enable file logging in mux
+        //  Save file logging settings to file
+        settings->setValue("fileLogging/append",  ui->appendButton->isChecked());
+        settings->setValue("fileLogging/folder",  ui->logfilePath->text());
+        settings->setValue("fileLogging/fileName",  ui->logfileName->text());
+        settings->setValue("fileLogging/channelSeparator",  ui->logfileChSep->text());
+    }
+    else
+    {
+        ui->overwriteButton->setEnabled(true);
+        ui->appendButton->setEnabled(true);
+        ui->logfilePathDialog->setEnabled(true);
+        ui->logfilePath->setEnabled(true);
+        ui->logfileName->setEnabled(true);
+        ui->logfileChSep->setEnabled(true);
+        //  Disable file logging in mux
+    }
+
+}

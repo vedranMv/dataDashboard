@@ -46,8 +46,8 @@ OrientationWindow::~OrientationWindow()
     qDebug()<<"Deleting orientation window";
     DataMultiplexer::GetI().UnregisterGraph(this);
 
-    MainWindow::clearLayout(_contWind->layout());
-    _contWind->deleteLater();
+//    MainWindow::clearLayout(_contWind->layout());
+//    _contWind->deleteLater();
 }
 
 /**

@@ -145,7 +145,7 @@ ScatterWindow::~ScatterWindow()
 
     _graph->seriesList().clear();
     _graph->close();
-    _graph->~Q3DScatter();
+    delete _graph;
 
     qDebug() << "Deleted UI";
 }

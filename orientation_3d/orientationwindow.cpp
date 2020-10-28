@@ -45,9 +45,6 @@ OrientationWindow::~OrientationWindow()
 {
     qDebug()<<"Deleting orientation window";
     DataMultiplexer::GetI().UnregisterGraph(this);
-
-//    MainWindow::clearLayout(_contWind->layout());
-//    _contWind->deleteLater();
 }
 
 /**
@@ -58,13 +55,12 @@ OrientationWindow::~OrientationWindow()
  */
 void OrientationWindow::ReceiveData(double *data, uint8_t n)
 {
-    qDebug()<<"Received data";
+
     // Check if the largest index of input channels is available in the
     // received block of data
     if (n < _maxInChannel)
         return;
 
-    qDebug()<<"Enough data. In "<<n;
     for (uint8_t i = 0; i < n; i++)
         qDebug()<<data[i];
 
@@ -72,9 +68,7 @@ void OrientationWindow::ReceiveData(double *data, uint8_t n)
     _widget3d->rotation = QQuaternion::fromEulerAngles( (float)data[ _inputChannels[1] ],
                                                 (float)data[ _inputChannels[2] ],
                                                 (float)data[ _inputChannels[0] ] );
-    qDebug()<<"Computed rotation";
-    _widget3d->update();
-    qDebug()<<"Updated widget";
+    _widget3d->update();;
 }
 
 /**

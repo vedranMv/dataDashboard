@@ -191,6 +191,9 @@ public slots:
 
     QStringList GetChannelList();
 
+    int EnableFileLogging(const QString &logPath, bool append, char chSep);
+    void DisableFileLogging();
+
 
 private:
         DataMultiplexer();
@@ -212,6 +215,11 @@ private:
 
         QString _buffer;
         QSemaphore _SerialdataReady;
+
+        QFile *_logFile;
+        QTextStream *_logFileStream;
+        bool _logToFile;
+        char _logChSep;
 };
 
 #endif // DATAMULTIPLEXER_H

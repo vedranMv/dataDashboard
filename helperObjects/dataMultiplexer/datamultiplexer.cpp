@@ -18,6 +18,10 @@ DataMultiplexer::DataMultiplexer(): _threadQuit(false)
 
     for (uint8_t i=0; i < 7; i++)
         _mChannel[i] = new MathChannel();
+
+    _logFile = nullptr;
+    _logFileStream = nullptr;
+    _logToFile = false;
 }
 
 DataMultiplexer::~DataMultiplexer()
@@ -252,6 +256,41 @@ void DataMultiplexer::UnregisterGraph(LinePlot* reciver)
     emit logLine("Unregistered graph "+name);
 }
 
+int DataMultiplexer::EnableFileLogging(const QString &logPath, bool append, char chSep)
+{
+    _logFile = new QFile(logPath);
+
+    QIODevice::OpenMode flags = QIODevice::WriteOnly | QIODevice::Text;
+    if (append)
+        flags |= QIODevice::Append;
+
+    if (!_logFile->open(flags))
+    {
+        emit logLine("Error opening log file");
+        _logFile->deleteLater();
+        return -1;
+    }
+
+    _logFileStream = new QTextStream(_logFile);
+    _logChSep = chSep;
+
+    _logToFile = true;
+    return 0;
+}
+void DataMultiplexer::DisableFileLogging()
+{
+    _logToFile = false;
+    _SerialdataReady.acquire(2);
+
+
+    _logFile->close();
+    delete _logFileStream;
+    _logFile->deleteLater();
+
+    _SerialdataReady.release(1);
+}
+
+
 /**
  * @brief DataMultiplexer::ComputeMathChannels
  */
@@ -378,7 +417,19 @@ void DataMultiplexer::run()
             //  Update graphs
             for (GraphClient* X : _Graphs)
                 X->SendData(_channelCount[SignalSource::AllChannels], _channelData);
-
+            //  Log to file if enabled
+            if (_logToFile)
+            {
+                QString line = "";
+                for (uint8_t i = 0; i < _channelCount[SignalSource::AllChannels]; i++)
+                {
+                    line += QString::number(_channelData[i]);
+                    if ((i+1) < _channelCount[SignalSource::AllChannels])
+                        line += _logChSep;
+                }
+                (*_logFileStream) << line << Qt::endl;
+                qDebug()<<line;
+            }
 //            for (uint8_t i = 0; i < _channelCount[0]; i++)
 //                qDebug()<<_channelCount[0]<<":"<<_channelData[0]<<","<<_channelData[1]<<","<<_channelData[2]<<"," \
 //                        <<_channelData[3]<<","<<_channelData[4];

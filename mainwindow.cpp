@@ -621,6 +621,7 @@ void MainWindow::on_fileloggingEnabled_stateChanged(int arg1)
         ui->logfileName->setEnabled(true);
         ui->logfileChSep->setEnabled(true);
         //  Disable file logging in mux
+        mux->DisableFileLogging();
     }
     else
     {
@@ -636,5 +637,12 @@ void MainWindow::on_fileloggingEnabled_stateChanged(int arg1)
         settings->setValue("fileLogging/fileName",  ui->logfileName->text());
         settings->setValue("fileLogging/channelSeparator",  ui->logfileChSep->text());
         //  Enable file logging in mux
+        QString logPath = ui->logfilePath->text()+'/'+ui->logfileName->text();
+
+        int retVal = mux->EnableFileLogging(logPath,
+                               ui->appendButton->isChecked(),
+                               ui->logfileChSep->text()[0].cell());
+        if (retVal != 0)
+            ui->fileloggingEnabled->setChecked(false);
     }
 }

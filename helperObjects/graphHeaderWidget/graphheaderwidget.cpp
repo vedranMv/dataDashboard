@@ -76,7 +76,7 @@ void graphHeaderWidget::ComboBoxUpdated(const int &)
 //        inputChannelList[i] = inCh[i]->currentIndex();
 
 //    emit UpdateInputChannels(inputChannelList);
-    for (uint8_t i = 0; i < 3; i++)
+    for (uint8_t i = 0; i < inCh.size(); i++)
         _inputChannelList[i] = inCh[i]->currentIndex();
 
     emit UpdateInputChannels(_inputChannelList);

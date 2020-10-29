@@ -55,6 +55,8 @@ private slots:
 
     void on_logfilePathDialog_clicked();
 
+    void on_addLine_clicked();
+
 private:
     void LoadSettings();
 

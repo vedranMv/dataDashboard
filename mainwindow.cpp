@@ -3,9 +3,10 @@
 
 
 #include "scatter/scatterwindow.h"
-#include "orientation_3d/orientationwidget.h"
-#include "helperObjects/graphHeaderWidget/graphheaderwidget.h"
 #include "orientation_3d/orientationwindow.h"
+#include "line/lineplot.h"
+#include "helperObjects/graphHeaderWidget/graphheaderwidget.h"
+
 
 #include <QApplication>
 #include <QLabel>
@@ -520,6 +521,7 @@ void MainWindow::on_add3D_clicked()
     QString winID = QString::number(_3DgraphCount);
 
     OrientationWindow *orient3DWindow = new OrientationWindow(this);
+    orient3DWindow->setObjectName("orientationWindow_"+winID);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(orient3DWindow);
 
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
@@ -543,6 +545,7 @@ void MainWindow::on_addScatter_clicked()
 
     //  Create scatter plot
     ScatterWindow *scatterWindow = new ScatterWindow();
+    scatterWindow->setObjectName("scatterWindow_"+winID);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(scatterWindow);
 
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
@@ -556,7 +559,40 @@ void MainWindow::on_addScatter_clicked()
 
 }
 
+/**
+ * @brief Create new line plot
+ */
+void MainWindow::on_addLine_clicked()
+{
+    static uint8_t _LineCount = 0;
+    QString winID = QString::number(_LineCount);
 
+    //  Create line plot
+    LinePlot *lineplotWindow = new LinePlot();
+    lineplotWindow->setObjectName("lineWindow_"+winID);
+    QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(lineplotWindow);
+
+    plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
+    plotWindow->setAttribute(Qt::WA_DeleteOnClose, true);
+    plotWindow->setWindowTitle("Line plot " + winID);
+
+    plotWindow->show();
+    _LineCount++;
+
+    mux->RegisterGraph("Line " + winID, 3, lineplotWindow);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+////
+///     Logging to file
+///
+///////////////////////////////////////////////////////////////////////////////
+
+/**
+ * @brief Open file dialog when 'Path' button has been click
+ *      Once the path has been selected, update textbox in UI
+ */
 void MainWindow::on_logfilePathDialog_clicked()
 {
     QString saveDir = QFileDialog::getExistingDirectory(this, tr("Open Directory"),
@@ -566,24 +602,17 @@ void MainWindow::on_logfilePathDialog_clicked()
     ui->logfilePath->setText(saveDir);
 }
 
+/**
+ * @brief Handle enabling/disabling logging to file
+ *      Handles click events to the 'Enable' checkbox which toggles logging to
+ *      the file. Updates UI and communicates with the MUX
+ * @param arg1  State of the checkbox
+ */
 void MainWindow::on_fileloggingEnabled_stateChanged(int arg1)
 {
-    if (arg1 != Qt::Unchecked)
-    {
-        ui->overwriteButton->setEnabled(false);
-        ui->appendButton->setEnabled(false);
-        ui->logfilePathDialog->setEnabled(false);
-        ui->logfilePath->setEnabled(false);
-        ui->logfileName->setEnabled(false);
-        ui->logfileChSep->setEnabled(false);
-        //  Enable file logging in mux
-        //  Save file logging settings to file
-        settings->setValue("fileLogging/append",  ui->appendButton->isChecked());
-        settings->setValue("fileLogging/folder",  ui->logfilePath->text());
-        settings->setValue("fileLogging/fileName",  ui->logfileName->text());
-        settings->setValue("fileLogging/channelSeparator",  ui->logfileChSep->text());
-    }
-    else
+    //  Checked can have PartiallyChecked and Checked states, so instead
+    //  evaluate if Unchecked
+    if (arg1 == Qt::Unchecked)
     {
         ui->overwriteButton->setEnabled(true);
         ui->appendButton->setEnabled(true);
@@ -593,5 +622,19 @@ void MainWindow::on_fileloggingEnabled_stateChanged(int arg1)
         ui->logfileChSep->setEnabled(true);
         //  Disable file logging in mux
     }
-
+    else
+    {
+        ui->overwriteButton->setEnabled(false);
+        ui->appendButton->setEnabled(false);
+        ui->logfilePathDialog->setEnabled(false);
+        ui->logfilePath->setEnabled(false);
+        ui->logfileName->setEnabled(false);
+        ui->logfileChSep->setEnabled(false);
+        //  Save file logging settings to file
+        settings->setValue("fileLogging/append",  ui->appendButton->isChecked());
+        settings->setValue("fileLogging/folder",  ui->logfilePath->text());
+        settings->setValue("fileLogging/fileName",  ui->logfileName->text());
+        settings->setValue("fileLogging/channelSeparator",  ui->logfileChSep->text());
+        //  Enable file logging in mux
+    }
 }

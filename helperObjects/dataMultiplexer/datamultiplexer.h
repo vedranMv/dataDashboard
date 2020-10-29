@@ -16,6 +16,7 @@
 
 #include <orientation_3d/orientationwindow.h>
 #include <scatter/scatterwindow.h>
+#include <line/lineplot.h>
 
 enum SignalSource {
     AllChannels,
@@ -32,7 +33,7 @@ enum MathOperation {
 enum GraphType {
     Orientation3D,
     Scatter,
-    Linear
+    Line
 };
 
 
@@ -46,6 +47,9 @@ public:
     GraphClient(QString name, uint8_t nInChannels, ScatterWindow* reciver) \
         :_name(name), _inChannels(nInChannels), _receiverScatter(reciver)
     { _type = GraphType::Scatter; }
+    GraphClient(QString name, uint8_t nInChannels, LinePlot* reciver) \
+        :_name(name), _inChannels(nInChannels), _receiverLine(reciver)
+    { _type = GraphType::Line; }
 
     void SetInputChannels(uint8_t n, uint8_t *chList)
     {
@@ -64,6 +68,9 @@ public:
             break;
         case GraphType::Scatter:
             _receiverScatter->ReceiveData(data, n);
+            break;
+        case GraphType::Line:
+            _receiverLine->ReceiveData(data, n);
             break;
         default:
             break;
@@ -90,6 +97,13 @@ public:
         return _receiverScatter;
     }
 
+    LinePlot* Receiver(LinePlot* dummy=0)
+    {
+        assert(dummy==dummy);
+        qDebug()<<"Asked for line receiver";
+        return _receiverLine;
+    }
+
 
 private:
     GraphType _type;
@@ -97,6 +111,7 @@ private:
     uint8_t _inChannels;
     OrientationWindow* _reciver3D;
     ScatterWindow* _receiverScatter;
+    LinePlot    *_receiverLine;
     std::vector<uint8_t>_inputChannelMap;
 };
 
@@ -156,9 +171,13 @@ public:
     void RegisterGraph(QString name,
                        uint8_t nInChannels,
                        ScatterWindow *receiver);
+    void RegisterGraph(QString name,
+                       uint8_t nInChannels,
+                       LinePlot *receiver);
 
     void UnregisterGraph(OrientationWindow* reciver);
     void UnregisterGraph(ScatterWindow* reciver);
+    void UnregisterGraph(LinePlot* reciver);
 
 signals:
     void logLine(const QString &s);

@@ -42,27 +42,30 @@ DataMultiplexer::~DataMultiplexer()
  * @param delim
  * @param end
  */
-void DataMultiplexer::SetSerialFrameFormat(const char &start, const char &delim, const char &end)
+void DataMultiplexer::SetSerialFrameFormat(const QString &start, const QString &delim, const QString &end)
 {
     _SerialframeFormat[0] = start;
     _SerialframeFormat[1] = delim;
     _SerialframeFormat[2] = end;
 
-    logLine(QString("Updated frame format with ")+_SerialframeFormat[0]+_SerialframeFormat[1]+_SerialframeFormat[2]);
+    logLine(QString("Updated frame format with ")+
+            _SerialframeFormat[0].length()+
+            _SerialframeFormat[1].length()+
+            _SerialframeFormat[2].length());
 }
 
 void DataMultiplexer::RegisterSerialCh(uint8_t n, QString *chName)
 {
+    emit logLine(tr("Registering %1 channels").arg(n));
     _SerialLabels.clear();
-    qDebug() << "Attempting to reconfigure";
 
     for (uint8_t i = 0; i < n; i++)
         _SerialLabels.push_back(chName[i]);
-    qDebug() << "Attempting to reconfigure2";
+     emit logLine("Adding new labels");
 
 
     _channelCount[SignalSource::SerialSignal] = n;
-    qDebug() << "Attempting to reconfigure3";
+    emit logLine("Updating serial channel count");
 
     _InternalChannelUpdate();
 
@@ -78,7 +81,7 @@ void DataMultiplexer::RegisterSerialCh(uint8_t n, QString *chName)
 void DataMultiplexer::RegisterMathChannel(uint8_t channelId,
                                           MathChannel *mc)
 {
-    qDebug()<<"Registering channel "<<channelId;
+    emit logLine(tr("Registering channel %1").arg(channelId));
     _threadQuit = true;
     wait();
 
@@ -94,7 +97,7 @@ void DataMultiplexer::RegisterMathChannel(uint8_t channelId,
     _InternalChannelUpdate();
     emit ChannelsUpdated();
 
-    qDebug()<<"Finished registering channel "<<channelId;
+    emit logLine(tr("Finished registering channel %1").arg(channelId));
     _threadQuit = false;
 }
 
@@ -104,7 +107,8 @@ void DataMultiplexer::RegisterMathChannel(uint8_t channelId,
  */
 void DataMultiplexer::UnegisterMathChannel(uint8_t channelId)
 {
-    qDebug()<<"Unregistering channel "<<channelId;
+    emit logLine(tr("Unregistering channel %1").arg(channelId));
+
     _threadQuit = true;
     wait();
 
@@ -114,7 +118,7 @@ void DataMultiplexer::UnegisterMathChannel(uint8_t channelId)
     _InternalChannelUpdate();
     emit ChannelsUpdated();
 
-    qDebug()<<"Finished unregistering channel "<<channelId;
+    emit logLine(tr("Finished unregistering channel %1").arg(channelId));
     _threadQuit = false;
 }
 
@@ -134,8 +138,6 @@ QStringList DataMultiplexer::GetChannelList()
         if (X->Enabled)
             retVal.append(X->GetLabel());
 
-   qDebug() << retVal;
-
     return retVal;
 }
 
@@ -151,7 +153,7 @@ void DataMultiplexer::_InternalChannelUpdate()
         wait();
     }
 
-    qDebug()<<"Deleting channel list of size "<<_channelCount[SignalSource::AllChannels];
+    emit logLine(tr("Deleting channel list of size %1").arg(_channelCount[SignalSource::AllChannels]));
 
     //  TODO: This breaks heap boundary when ran with active serial port?
     //  If _channelData has been initialized before, delete it first
@@ -159,15 +161,18 @@ void DataMultiplexer::_InternalChannelUpdate()
 //        delete [] _channelData;
 
 
-    qDebug()<<"Recomputing channel count";
+    emit logLine(tr("Deleting channel list of size %2"));
     //  Compute new number total of channels
     _channelCount[SignalSource::AllChannels] =
             _channelCount[SignalSource::SerialSignal] +
             _channelCount[SignalSource::MathSignal];
 
-    qDebug()<<"Allocating "<< _channelCount[SignalSource::AllChannels]<< " new channel array";
+    emit logLine(tr("Allocating %1 new channels").arg(_channelCount[SignalSource::AllChannels]));
     //  Allocate data array for all current channels
     _channelData = new double[_channelCount[SignalSource::AllChannels]];
+
+    //  Update finished, remember to revive the thread
+    _threadQuit = false;
 }
 
 /**
@@ -322,9 +327,10 @@ void DataMultiplexer::_ComputeMathChannels()
  */
 void DataMultiplexer::ReceiveSerialData(const QString &buffer)
 {
+    //emit logLine("Waiting to acquire");
     _SerialdataReady.acquire(1);
-    _buffer = buffer;
-
+    _buffer += buffer;
+    //emit logLine("Acquired, running");
     if (!isRunning() && !_threadQuit)
     {
         //  External process use this flag to control thread, avoid
@@ -344,7 +350,7 @@ void DataMultiplexer::ReceiveSerialData(const QString &buffer)
  */
 void DataMultiplexer::run()
 {
-    qDebug()<<"Data thread started";
+    emit logLine("Data thread started");
     while (!_threadQuit)
     {
         if (!_SerialdataReady.tryAcquire(2,1))
@@ -362,37 +368,81 @@ void DataMultiplexer::run()
         for (int32_t i = 0; i < buffer.length(); i++)
         {
             QString tmp("");
-            //  Find start of the frame
-            while (buffer[i].cell() != _SerialframeFormat[0])
-                //  If we're about to overflow the buffer, terminate further
-                //  processing and jump to the end of this loop to wait for
-                //  new data frame
-                if ((i+1) >= buffer.length())
-                    goto end_goto;
-                else
-                    i++;
-
-            if ((i+1) >= buffer.length())
-                goto end_goto;
-            else
-                i++;
-
-            //  Loop until the end char has been found
-            while (buffer[i].cell() != _SerialframeFormat[2])
+            //  Find start of the frame, if provided
+            if (_SerialframeFormat[0].length() != 0)
             {
-                tmp += buffer[i];
-                if ((i+1) >= buffer.length())
-                    goto end_goto;
-                else
-                    i++;
+                uint8_t ffCounter = 0;
+                while (ffCounter < _SerialframeFormat[0].length())
+                {
+
+                    if (buffer[i].cell() == _SerialframeFormat[0][ffCounter].cell())
+                        ffCounter++;
+                    else
+                        ffCounter=0;
+                    //  If we're about to look outside the buffer, terminate further
+                    //  processing and jump to the end of this loop to wait for
+                    //  new data frame
+                    if ((i+1) >= buffer.length())
+                        goto end_goto;
+                    else
+                        i++;
+                }
             }
 
-            QStringList chnValues = tmp.split( _SerialframeFormat[1] );
+            QStringList chnValues;
+
+            if (_SerialframeFormat[2].length() != 0)
+            {
+                QString tmpNumber = "";
+                uint8_t ffCounter = 0;
+                while (ffCounter < _SerialframeFormat[2].length())
+                {
+                    //  Save data in this temporary buffer in case this frame
+                    //  is not complete
+                    tmp += buffer[i];
+                    // In case where frame format characters are subset of values in the data,
+                    //  this will fail. Maybe future consideration?
+                    if (buffer[i].cell() == _SerialframeFormat[2][ffCounter].cell())
+                        ffCounter++;
+                    else
+                    {
+                        //  Add only data chars here, not frame format characters
+                        ffCounter=0;
+                        if (buffer[i] == _SerialframeFormat[1])
+                        {
+                            chnValues.append(tmpNumber);
+                            tmpNumber = "";
+                        }
+                        else
+                            tmpNumber += buffer[i];
+                    }
+                    //  If we're about to look outside the buffer, terminate further
+                    //  processing and jump to the end of this loop to wait for
+                    //  new data frame
+                    if ((i+1) >= buffer.length() && (ffCounter != _SerialframeFormat[2].length()))
+                    {
+                        //  save buffer for next loop iteration
+                        _buffer = tmp;
+                        emit logLine("Failed to match terminator sequence");
+                        qDebug()<<"i-2: "<<buffer[i-2]<<"i-1: "<<buffer[i-1]<<"i: "<<buffer[i];
+                        goto end_goto;
+                    }
+                    else
+                        i++;
+                }
+                //  We can only get to here if the terminating sequence has
+                //  been found. Add last number
+                chnValues.append(tmpNumber);
+                if (chnValues.size() == 4)
+                    qDebug()<<"A";
+            }
+
+            //QStringList chnValues = tmp.split( _SerialframeFormat[1] );
 
             //  Check for discrepancy in channel count
             if (chnValues.size() != _SerialLabels.size())
             {
-                emit logLine(tr("Channel number discrepancy"));
+                emit logLine(tr("Channel number discrepancy. Got %1, expected %2").arg(chnValues.size()).arg(_SerialLabels.size()));
                 goto end_goto;
             }
 
@@ -400,7 +450,6 @@ void DataMultiplexer::run()
             for (uint8_t j = 0; j < chnValues.size(); j++)
             {
                 bool ok = false;
-
                 double tmp = chnValues[j].toDouble(&ok);
 
                 if (ok)
@@ -438,5 +487,5 @@ end_goto:
         _SerialdataReady.release(1);
 
     }
-    qDebug()<<"Data thread stopped";
+    emit logLine("Data thread stopped");
 }

@@ -107,9 +107,11 @@ void SerialAdapter::run()
 {
     QSerialPort serial;
 
+    emit logLine("Serial thread started");
+
     if (portName.isEmpty())
     {
-        emit error(tr("No port name specified"));
+        emit logLine(tr("No port name specified"));
         return;
     }
 
@@ -126,7 +128,7 @@ void SerialAdapter::run()
 
             if (!serial.open(QIODevice::ReadWrite))
             {
-                emit error(tr("Can't open %1, error code %2")
+                emit logLine(tr("Can't open %1, error code %2")
                            .arg(portName).arg(serial.error()));
                 return;
             }
@@ -148,6 +150,7 @@ void SerialAdapter::run()
     }
     serial.close();
     threadQuit = false;
+    emit logLine("Serial thread exited");
 }
 
 void SerialAdapter::RegisterMux(DataMultiplexer* mux)

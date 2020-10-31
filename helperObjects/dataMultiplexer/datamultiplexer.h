@@ -158,7 +158,7 @@ public:
     static DataMultiplexer& GetI();
     static DataMultiplexer* GetP();
 
-    void SetSerialFrameFormat(const char &start, const char &delim, const char &end);
+    void SetSerialFrameFormat(const QString &start, const QString &delim, const QString &end);
 
     void RegisterSerialCh(uint8_t n, QString *chName);
 
@@ -204,7 +204,7 @@ private:
         void run() override;
         bool _threadQuit;
 
-        char _SerialframeFormat[3];
+        QString _SerialframeFormat[3];
 
         double *_channelData;
         uint8_t _channelCount[4];

@@ -136,7 +136,7 @@ void SerialAdapter::run()
         }
 
         // Read response
-        if (serial.waitForReadyRead(1))
+        if (serial.waitForReadyRead(5))
         {
             QByteArray responseData = serial.readAll();
             while (serial.waitForReadyRead(1))

@@ -86,21 +86,18 @@ public:
     OrientationWindow* Receiver(OrientationWindow* dummy=0)
     {
         assert(dummy==dummy);
-        qDebug()<<"Asked for 3d receiver";
         return _reciver3D;
     }
 
     ScatterWindow* Receiver(ScatterWindow* dummy=0)
     {
         assert(dummy==dummy);
-        qDebug()<<"Asked for scatter receiver";
         return _receiverScatter;
     }
 
     LinePlot* Receiver(LinePlot* dummy=0)
     {
         assert(dummy==dummy);
-        qDebug()<<"Asked for line receiver";
         return _receiverLine;
     }
 

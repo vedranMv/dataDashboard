@@ -361,91 +361,127 @@ void DataMultiplexer::run()
         if (_SerialLabels.size() == 0)
         {
             emit logLine(tr("No serial channels registered"));
-            goto end_goto;
+            return;
+            //goto end_goto;
         }
 
-        //  Loop through received data and split it in frames
+        QString tmp("");
+        //  Loop through received data and split it in frames. 'i' holds
+        //  current char position and is further incremented inside the loop
         for (int32_t i = 0; i < buffer.length(); i++)
         {
-            QString tmp("");
+            //  tmp hold all characters of the current frame we're currently
+            //  processing. If that frame is incomplete, we can push it into
+            //  the processing on the next iteration of the loop with new data.
+            tmp = "";
+
             //  Find start of the frame, if provided
+            //  This block essentially tries to find a substring
+            //  _SerialframeFormat[X] in buffer.
             if (_SerialframeFormat[0].length() != 0)
             {
-                uint8_t ffCounter = 0;
-                while (ffCounter < _SerialframeFormat[0].length())
+                //  ffIter keeps track of the current character in frame
+                //  counter. It's incremented every time current char in frame
+                //  counter is found in the buffer, and immediately reset to 0
+                //  when there's no match
+                uint8_t ffIter = 0;
+                //  Loop until we reach the last char is starting sequence
+                while (ffIter < _SerialframeFormat[0].length())
                 {
 
-                    if (buffer[i].cell() == _SerialframeFormat[0][ffCounter].cell())
-                        ffCounter++;
+                    tmp += buffer[i];
+
+                    //  If current char in buffer matches the current char in
+                    //  frame format, move frame format iterator to next position
+                    //  of the string in an attempt to perform matching on it.
+                    if (buffer[i].cell() == _SerialframeFormat[0][ffIter].cell())
+                        ffIter++;
                     else
-                        ffCounter=0;
+                        //  When match is not found, reset the iterator to 0 in
+                        //  an attempt to match the start of the frame from
+                        //  the start
+                        ffIter=0;
+
                     //  If we're about to look outside the buffer, terminate further
-                    //  processing and jump to the end of this loop to wait for
+                    //  processing and jump outside of this loop to wait for
                     //  new data frame
                     if ((i+1) >= buffer.length())
+                    {
+                        _buffer = "";
                         goto end_goto;
+                    }
                     else
                         i++;
                 }
             }
 
             QStringList chnValues;
-
+            //  Same principle as above, look for substring in buffer
             if (_SerialframeFormat[2].length() != 0)
             {
                 QString tmpNumber = "";
-                uint8_t ffCounter = 0;
-                while (ffCounter < _SerialframeFormat[2].length())
+                uint8_t ffIter = 0;
+                //  Loop until the _SerialframeFormat[2] is found in buffer
+                while (ffIter < _SerialframeFormat[2].length())
                 {
-                    //  Save data in this temporary buffer in case this frame
+                    //  Save data in temporary buffer in case this frame
                     //  is not complete
                     tmp += buffer[i];
-                    // In case where frame format characters are subset of values in the data,
-                    //  this will fail. Maybe future consideration?
-                    if (buffer[i].cell() == _SerialframeFormat[2][ffCounter].cell())
-                        ffCounter++;
+
+                    // In case where frame format characters are subset of
+                    //  values in the data, this will fail. Maybe future
+                    //  consideration?
+                    if (buffer[i].cell() == _SerialframeFormat[2][ffIter].cell())
+                        ffIter++;
                     else
                     {
-                        //  Add only data chars here, not frame format characters
-                        ffCounter=0;
+                        ffIter=0;
+                        //  Check if current char is channel separator, if so
+                        //  add the value we just assembled to the string list
                         if (buffer[i] == _SerialframeFormat[1])
                         {
                             chnValues.append(tmpNumber);
                             tmpNumber = "";
                         }
                         else
+                        //  Otherwise, just keep adding chars from the buffer
+                        //  into the number accumulator
                             tmpNumber += buffer[i];
                     }
                     //  If we're about to look outside the buffer, terminate further
-                    //  processing and jump to the end of this loop to wait for
+                    //  processing and jump outside of this loop to wait for
                     //  new data frame
-                    if ((i+1) >= buffer.length() && (ffCounter != _SerialframeFormat[2].length()))
+                    if ((i+1) >= buffer.length() &&
+                        (ffIter != _SerialframeFormat[2].length()))
                     {
-                        //  save buffer for next loop iteration
+                        //  To get in here, we must've found the starting sequence
+                        //  of the frame but not the ending one. In this case, we
+                        //  want to save this partial frame so that the missing
+                        //  piece is appended next time new serial data is available
+
+                        //  Save buffer for next loop iteration
                         _buffer = tmp;
-                        emit logLine("Failed to match terminator sequence");
-                        qDebug()<<"i-2: "<<buffer[i-2]<<"i-1: "<<buffer[i-1]<<"i: "<<buffer[i];
+                        //emit logLine("Failed to match terminator sequence");
                         goto end_goto;
                     }
                     else
                         i++;
                 }
                 //  We can only get to here if the terminating sequence has
-                //  been found. Add last number
+                //  been found. Add the last number detected before the sequence
                 chnValues.append(tmpNumber);
-                if (chnValues.size() == 4)
-                    qDebug()<<"A";
+//                if (chnValues.size() != 3)
+//                    qDebug()<<chnValues.size();
             }
-
-            //QStringList chnValues = tmp.split( _SerialframeFormat[1] );
 
             //  Check for discrepancy in channel count
-            if (chnValues.size() != _SerialLabels.size())
+            if (chnValues.size() != (int)_SerialLabels.size())
             {
-                emit logLine(tr("Channel number discrepancy. Got %1, expected %2").arg(chnValues.size()).arg(_SerialLabels.size()));
-                goto end_goto;
+                emit logLine(tr("Channel number discrepancy. Got %1, expected %2")\
+                             .arg(chnValues.size()).arg(_SerialLabels.size()));
+                continue;
+                //goto end_goto;
             }
-
             //  Go through the list of channels and move it into data buffer
             for (uint8_t j = 0; j < chnValues.size(); j++)
             {
@@ -470,19 +506,17 @@ void DataMultiplexer::run()
             if (_logToFile)
             {
                 QString line = "";
-                for (uint8_t i = 0; i < _channelCount[SignalSource::AllChannels]; i++)
+                for (uint8_t k = 0; k < _channelCount[SignalSource::AllChannels]; k++)
                 {
-                    line += QString::number(_channelData[i]);
-                    if ((i+1) < _channelCount[SignalSource::AllChannels])
+                    line += QString::number(_channelData[k]);
+                    if ((k+1) < _channelCount[SignalSource::AllChannels])
                         line += _logChSep;
                 }
                 (*_logFileStream) << line << Qt::endl;
-                qDebug()<<line;
             }
-//            for (uint8_t i = 0; i < _channelCount[0]; i++)
-//                qDebug()<<_channelCount[0]<<":"<<_channelData[0]<<","<<_channelData[1]<<","<<_channelData[2]<<"," \
-//                        <<_channelData[3]<<","<<_channelData[4];
+
         }
+
 end_goto:
         _SerialdataReady.release(1);
 

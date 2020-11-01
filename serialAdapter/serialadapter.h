@@ -73,7 +73,7 @@ public:
 
 signals:
     void response(const QString &s);
-    void error(const QString &s);
+    void logLine(const QString &s);
     void timeout(const QString &s);
 
 public slots:

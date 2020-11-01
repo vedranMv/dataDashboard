@@ -61,9 +61,6 @@ void OrientationWindow::ReceiveData(double *data, uint8_t n)
     if (n < _maxInChannel)
         return;
 
-    for (uint8_t i = 0; i < n; i++)
-        qDebug()<<data[i];
-
     // Update rotation
     _widget3d->rotation = QQuaternion::fromEulerAngles( (float)data[ _inputChannels[1] ],
                                                 (float)data[ _inputChannels[2] ],

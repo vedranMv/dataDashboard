@@ -90,7 +90,6 @@ void LinePlot::UpdateInputChannels(uint8_t *inChannels)
 void LinePlot::ReceiveData(double *data, uint8_t n)
 {
     static uint32_t index = 0;
-    qDebug()<<"Received "<<n<<", needing: "<<_maxInChannel;
     // Check if the largest index of input channels is available in the
     // received block of data
     if (n < _maxInChannel)
@@ -98,7 +97,7 @@ void LinePlot::ReceiveData(double *data, uint8_t n)
 
     _inputCh[0][ index ] = data[_inputChannels[0]];
     _inputCh[1][ index ] = data[_inputChannels[1]];
-    qDebug()<<"A: "<<_inputCh[0][ index ]<<", B: "<<_inputCh[1][ index ];
+
     _plot->graph(0)->setData(_xAxis, _inputCh[0]);
     _plot->graph(1)->setData(_xAxis, _inputCh[1]);
 

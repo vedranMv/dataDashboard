@@ -86,21 +86,18 @@ public:
     OrientationWindow* Receiver(OrientationWindow* dummy=0)
     {
         assert(dummy==dummy);
-        qDebug()<<"Asked for 3d receiver";
         return _reciver3D;
     }
 
     ScatterWindow* Receiver(ScatterWindow* dummy=0)
     {
         assert(dummy==dummy);
-        qDebug()<<"Asked for scatter receiver";
         return _receiverScatter;
     }
 
     LinePlot* Receiver(LinePlot* dummy=0)
     {
         assert(dummy==dummy);
-        qDebug()<<"Asked for line receiver";
         return _receiverLine;
     }
 
@@ -158,7 +155,7 @@ public:
     static DataMultiplexer& GetI();
     static DataMultiplexer* GetP();
 
-    void SetSerialFrameFormat(const char &start, const char &delim, const char &end);
+    void SetSerialFrameFormat(const QString &start, const QString &delim, const QString &end);
 
     void RegisterSerialCh(uint8_t n, QString *chName);
 
@@ -204,7 +201,7 @@ private:
         void run() override;
         bool _threadQuit;
 
-        char _SerialframeFormat[3];
+        QString _SerialframeFormat[3];
 
         double *_channelData;
         uint8_t _channelCount[4];

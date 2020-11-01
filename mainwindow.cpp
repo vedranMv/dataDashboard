@@ -90,7 +90,7 @@ MainWindow::MainWindow(QWidget *parent) :
     // 'Connect' button opens serial port connection
     QObject::connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::toggleConnection);
     //  Serial adapter objects logs data into a MainWindow logger
-    QObject::connect(dataAdapter, &SerialAdapter::error, this, &MainWindow::logLine);
+    QObject::connect(dataAdapter, &SerialAdapter::logLine, this, &MainWindow::logLine);
 
     //  Connect channel enable signals to slot
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
@@ -230,9 +230,15 @@ void MainWindow::toggleConnection()
     if (ui->connectButton->text() == "Connect")
     {
         //  Update frame information in MUX
-        mux->SetSerialFrameFormat(ui->frameStartCh->text()[0].cell(), \
-                ui->frameChSeparator->text()[0].cell(), \
-                ui->frameEndSep->text()[0].cell());
+        QString termSeq = ui->frameEndSep->text();
+        if (ui->termSlashR->isChecked())
+            termSeq += QChar(0x000D);
+        if (ui->termSlashN->isChecked())
+            termSeq += QChar(0x000A);
+
+        mux->SetSerialFrameFormat(ui->frameStartCh->text(), \
+                ui->frameChSeparator->text(), \
+                termSeq);
 
         //  Collect channel labels and register them in the mux
         QString *chLabels = new QString[ch.size()];
@@ -274,6 +280,7 @@ void MainWindow::logLine(const QString &line)
     QString time = QDateTime::currentDateTime().time().toString();
     ui->logLine->setText(time + ": " + line);
 
+    qDebug()<<time + ": " + line;
     //TODO: Log into a text file as well
 }
 

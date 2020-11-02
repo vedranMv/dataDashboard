@@ -15,44 +15,6 @@ OrientationWindow::OrientationWindow(QWidget *parent): _nInputs(3)
     windMainLayout = new QVBoxLayout(_contWind);
 
     _ConstructUI();
-
-//    //  Main vertical layout
-//    QVBoxLayout *windMainLayout = new QVBoxLayout(_contWind);
-
-//    //  Header with input channel drop-downs
-//    _header = new graphHeaderWidget(3, false);
-//    windMainLayout->addLayout(_header->GetLayout());
-
-//    QVBoxLayout *radioButtonHolder = new QVBoxLayout();
-//    _header->GetLayout()->addLayout(radioButtonHolder);
-
-//    QRadioButton *rpyInput = new QRadioButton();
-//    QRadioButton *quatInput = new QRadioButton();
-//    radioButtonHolder->addWidget(rpyInput);
-//    radioButtonHolder->addWidget(quatInput);
-
-//    connect(rpyInput, &QRadioButton::toggled,
-//            this, &OrientationWindow::InputTypeUpdated);
-
-//    //  3D orientation widget
-//    _widget3d = new OrientationWidget();
-//    _widget3d->setMinimumSize(QSize(200,200));
-//    _widget3d->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-//    windMainLayout->addWidget(_widget3d);
-
-//    //  Make sure input channel dropdowns have updated list of channels
-//    QObject::connect(DataMultiplexer::GetP(),
-//                     &DataMultiplexer::ChannelsUpdated,
-//                     _header,
-//                     &graphHeaderWidget::UpdateChannelDropdown);
-//    //  Handle dynamic channel selection by dropdown
-//    QObject::connect(_header, &graphHeaderWidget::UpdateInputChannels,
-//                     this, &OrientationWindow::UpdateInputChannels);
-
-//    _inputChannels[0] = 0;
-//    _inputChannels[1] = 0;
-//    _inputChannels[2] = 0;
-//    _maxInChannel = 0;
 }
 
 OrientationWindow::~OrientationWindow()
@@ -68,11 +30,6 @@ void OrientationWindow::_ConstructUI()
         DataMultiplexer::GetI().UnregisterGraph(this);
         MainWindow::clearLayout(_contWind->layout());
     }
-
-    //  Main vertical layout
-    //QVBoxLayout *windMainLayout = new QVBoxLayout(_contWind);
-    //QVBoxLayout *windMainLayout = _contWind->layout();
-    //_contWind->setLayout(windMainLayout);
 
     //  Header with input channel drop-downs
     _header = new graphHeaderWidget(_nInputs, false);
@@ -119,6 +76,7 @@ void OrientationWindow::_ConstructUI()
 
     _maxInChannel = 0;
 
+    //  Register with the mux
     DataMultiplexer::GetI().RegisterGraph(this->objectName(), _nInputs, this);
 }
 

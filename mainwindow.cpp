@@ -278,6 +278,7 @@ void MainWindow::toggleConnection()
 void MainWindow::logLine(const QString &line)
 {
     QString time = QDateTime::currentDateTime().time().toString();
+
     ui->logLine->setText(time + ": " + line);
 
     qDebug()<<time + ": " + line;
@@ -537,9 +538,6 @@ void MainWindow::on_add3D_clicked()
 
     plotWindow->show();
     _3DgraphCount++;
-
-    mux->RegisterGraph("3D Orientation " + winID, 3, orient3DWindow);
-
 }
 
 /**
@@ -561,9 +559,6 @@ void MainWindow::on_addScatter_clicked()
 
     plotWindow->show();
     _ScatterCount++;
-
-    mux->RegisterGraph("Scatter " + winID, 3, scatterWindow);
-
 }
 
 /**
@@ -585,8 +580,6 @@ void MainWindow::on_addLine_clicked()
 
     plotWindow->show();
     _LineCount++;
-
-    mux->RegisterGraph("Line " + winID, 3, lineplotWindow);
 }
 
 

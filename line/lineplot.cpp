@@ -46,6 +46,9 @@ LinePlot::LinePlot()
     _refresher = new QTimer(this);
     connect(_refresher, SIGNAL(timeout()), _plot, SLOT(replot()));
     _refresher->start(20);
+
+    //  Register with the mux
+    DataMultiplexer::GetI().RegisterGraph(this->objectName(), 2, this);
 }
 
 LinePlot::~LinePlot()

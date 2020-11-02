@@ -123,6 +123,9 @@ ScatterWindow::ScatterWindow()
     _dataArray->resize(dataSize);
 
     _graph->seriesList().at(0)->dataProxy()->resetArray(_dataArray);
+
+    //  Register with the mux
+    DataMultiplexer::GetI().RegisterGraph(this->objectName(), 3, this);
 }
 
 /**
@@ -132,8 +135,6 @@ ScatterWindow::~ScatterWindow()
 {
     qDebug() << "Destroying the scatter plot";
     DataMultiplexer::GetI().UnregisterGraph(this);
-
-    qDebug() << "Unregistered graph, disconnecting from mux";
 
     QObject::disconnect(DataMultiplexer::GetP(),
                     &DataMultiplexer::ChannelsUpdated,
@@ -147,8 +148,6 @@ ScatterWindow::~ScatterWindow()
     _graph->seriesList().clear();
     _graph->close();
     delete _graph;
-
-    qDebug() << "Deleted UI";
 }
 
 /**

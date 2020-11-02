@@ -6,19 +6,98 @@
 #include <QQuaternion>
 
 
-OrientationWindow::OrientationWindow(QWidget *parent)
+OrientationWindow::OrientationWindow(QWidget *parent): _nInputs(3)
 {
     this->setParent(parent);
     //  Create container window
     _contWind = new QWidget();
     this->setWidget(_contWind);
+    windMainLayout = new QVBoxLayout(_contWind);
+
+    _ConstructUI();
+
+//    //  Main vertical layout
+//    QVBoxLayout *windMainLayout = new QVBoxLayout(_contWind);
+
+//    //  Header with input channel drop-downs
+//    _header = new graphHeaderWidget(3, false);
+//    windMainLayout->addLayout(_header->GetLayout());
+
+//    QVBoxLayout *radioButtonHolder = new QVBoxLayout();
+//    _header->GetLayout()->addLayout(radioButtonHolder);
+
+//    QRadioButton *rpyInput = new QRadioButton();
+//    QRadioButton *quatInput = new QRadioButton();
+//    radioButtonHolder->addWidget(rpyInput);
+//    radioButtonHolder->addWidget(quatInput);
+
+//    connect(rpyInput, &QRadioButton::toggled,
+//            this, &OrientationWindow::InputTypeUpdated);
+
+//    //  3D orientation widget
+//    _widget3d = new OrientationWidget();
+//    _widget3d->setMinimumSize(QSize(200,200));
+//    _widget3d->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+//    windMainLayout->addWidget(_widget3d);
+
+//    //  Make sure input channel dropdowns have updated list of channels
+//    QObject::connect(DataMultiplexer::GetP(),
+//                     &DataMultiplexer::ChannelsUpdated,
+//                     _header,
+//                     &graphHeaderWidget::UpdateChannelDropdown);
+//    //  Handle dynamic channel selection by dropdown
+//    QObject::connect(_header, &graphHeaderWidget::UpdateInputChannels,
+//                     this, &OrientationWindow::UpdateInputChannels);
+
+//    _inputChannels[0] = 0;
+//    _inputChannels[1] = 0;
+//    _inputChannels[2] = 0;
+//    _maxInChannel = 0;
+}
+
+OrientationWindow::~OrientationWindow()
+{
+    qDebug()<<"Deleting orientation window";
+    DataMultiplexer::GetI().UnregisterGraph(this);
+}
+
+void OrientationWindow::_ConstructUI()
+{
+    if (!_contWind->layout()->isEmpty())
+    {
+        DataMultiplexer::GetI().UnregisterGraph(this);
+        MainWindow::clearLayout(_contWind->layout());
+    }
 
     //  Main vertical layout
-    QVBoxLayout *windMainLayout = new QVBoxLayout(_contWind);
+    //QVBoxLayout *windMainLayout = new QVBoxLayout(_contWind);
+    //QVBoxLayout *windMainLayout = _contWind->layout();
+    //_contWind->setLayout(windMainLayout);
 
     //  Header with input channel drop-downs
-    _header = new graphHeaderWidget(3, false);
+    _header = new graphHeaderWidget(_nInputs, false);
     windMainLayout->addLayout(_header->GetLayout());
+
+    QVBoxLayout *radioButtonHolder = new QVBoxLayout();
+
+    QRadioButton *rpyInput = new QRadioButton();
+    QRadioButton *quatInput = new QRadioButton();
+    rpyInput->setText("Euler (RPY)");
+    quatInput->setText("Quaternion (w,x,y,z)");
+    if (_nInputs == 3)
+        rpyInput->setChecked(true);
+    else
+        quatInput->setChecked(true);
+    radioButtonHolder->addWidget(new QLabel("Input type"));
+    radioButtonHolder->addWidget(rpyInput);
+    radioButtonHolder->addWidget(quatInput);
+    radioButtonHolder->addSpacerItem(new QSpacerItem (20,20,QSizePolicy::Expanding));
+    _header->GetLayout()->addLayout(radioButtonHolder);
+    _header->AppendHorSpacer();
+
+
+    connect(rpyInput, &QRadioButton::toggled,
+            this, &OrientationWindow::InputTypeUpdated);
 
     //  3D orientation widget
     _widget3d = new OrientationWidget();
@@ -35,16 +114,22 @@ OrientationWindow::OrientationWindow(QWidget *parent)
     QObject::connect(_header, &graphHeaderWidget::UpdateInputChannels,
                      this, &OrientationWindow::UpdateInputChannels);
 
-    _inputChannels[0] = 0;
-    _inputChannels[1] = 0;
-    _inputChannels[2] = 0;
+    for (uint8_t i = 0; i < _nInputs; i++)
+        _inputChannels[i] = 0;
+
     _maxInChannel = 0;
+
+    DataMultiplexer::GetI().RegisterGraph(this->objectName(), _nInputs, this);
 }
 
-OrientationWindow::~OrientationWindow()
+void OrientationWindow::InputTypeUpdated(bool rpySelected)
 {
-    qDebug()<<"Deleting orientation window";
-    DataMultiplexer::GetI().UnregisterGraph(this);
+    if (rpySelected)
+        _nInputs = 3;
+    else
+        _nInputs = 4;
+
+    _ConstructUI();
 }
 
 /**
@@ -62,9 +147,18 @@ void OrientationWindow::ReceiveData(double *data, uint8_t n)
         return;
 
     // Update rotation
-    _widget3d->rotation = QQuaternion::fromEulerAngles( (float)data[ _inputChannels[1] ],
-                                                (float)data[ _inputChannels[2] ],
-                                                (float)data[ _inputChannels[0] ] );
+    if (_nInputs == 3)
+        _widget3d->rotation = \
+                QQuaternion::fromEulerAngles( (float)data[ _inputChannels[1] ],
+                                                    (float)data[ _inputChannels[2] ],
+                                                    (float)data[ _inputChannels[0] ] );
+    else
+        _widget3d->rotation = \
+                QQuaternion((float)data[ _inputChannels[0] ],
+                (float)data[ _inputChannels[1] ],
+                (float)data[ _inputChannels[2] ],
+                (float)data[ _inputChannels[3] ] );
+
     _widget3d->update();;
 }
 

@@ -17,13 +17,17 @@ public:
 
 public slots:
     void UpdateInputChannels(uint8_t *inChannels);
+    void InputTypeUpdated(bool rpySelected);
 
 private:
+    void _ConstructUI();
     QWidget             *_contWind;
+    QVBoxLayout         *windMainLayout;
     graphHeaderWidget   *_header;
     OrientationWidget   *_widget3d;
-    uint8_t             _inputChannels[3];
+    uint8_t             _inputChannels[4];
     uint8_t             _maxInChannel;
+    uint8_t             _nInputs;
 };
 
 #endif // ORIENTATIONWINDOW_H

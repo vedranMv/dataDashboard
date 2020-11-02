@@ -13,11 +13,9 @@ graphHeaderWidget::graphHeaderWidget(uint8_t chnnelNum, bool hasBoundaries)
     _controlLayout = new QHBoxLayout();
     QVBoxLayout *chLabels = new QVBoxLayout();
     QVBoxLayout *inChannels = new QVBoxLayout();
-    QSpacerItem *horSpacer = new QSpacerItem (20,20,QSizePolicy::Expanding);
 
     _controlLayout->addLayout(chLabels);
     _controlLayout->addLayout(inChannels);
-    _controlLayout->addSpacerItem(horSpacer);
 
     _inputChannelList = new uint8_t[chnnelNum];
 
@@ -38,6 +36,12 @@ graphHeaderWidget::graphHeaderWidget(uint8_t chnnelNum, bool hasBoundaries)
     }
     UpdateChannelDropdown();
 
+}
+
+
+void graphHeaderWidget::AppendHorSpacer()
+{
+    _controlLayout->addSpacerItem(new QSpacerItem (20,20,QSizePolicy::Expanding));
 }
 
 void graphHeaderWidget::UpdateChannelDropdown()

@@ -13,6 +13,7 @@ LinePlot::LinePlot()
 
      _header = new graphHeaderWidget(2, false);
      windMainLayout->addLayout(_header->GetLayout());
+     _header->AppendHorSpacer();
 
      //  Handle dynamic channel selection by dropdown
      QObject::connect(_header, &graphHeaderWidget::UpdateInputChannels,

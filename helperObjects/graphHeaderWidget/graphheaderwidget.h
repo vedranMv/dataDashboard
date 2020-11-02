@@ -15,6 +15,7 @@ public:
     graphHeaderWidget(uint8_t chnnelNum, bool hasBoundaries);
     ~graphHeaderWidget();
 
+    void AppendHorSpacer();
     void UpdateChannelDropdown();
     QStringList GetChannelLabels();
 

@@ -65,6 +65,7 @@ ScatterWindow::ScatterWindow()
     //  Expand header with scatter-specific fields
     QVBoxLayout *scatterSpecific = new QVBoxLayout();
     _header->GetLayout()->addLayout(scatterSpecific);
+    _header->AppendHorSpacer();
 
     //  Data size line edit
     scatterSpecific->addWidget(new QLabel("Data size (automatically updated)"));

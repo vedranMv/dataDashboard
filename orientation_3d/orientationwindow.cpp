@@ -19,7 +19,7 @@ OrientationWindow::OrientationWindow(QWidget *parent): _nInputs(3)
 
 OrientationWindow::~OrientationWindow()
 {
-    qDebug()<<"Deleting orientation window";
+    emit logLine("Deleting orientation window");
     DataMultiplexer::GetI().UnregisterGraph(this);
 }
 
@@ -31,27 +31,29 @@ void OrientationWindow::_ConstructUI()
         MainWindow::clearLayout(_contWind->layout());
     }
 
-    //  Header with input channel drop-downs
-    _header = new graphHeaderWidget(_nInputs, false);
+    //  Basic header with input channel drop-downs
+    _header = new graphHeaderWidget(_nInputs);
     windMainLayout->addLayout(_header->GetLayout());
 
-    QVBoxLayout *radioButtonHolder = new QVBoxLayout();
+    //  Header items for orientation plot
+    QVBoxLayout *orientationSpecificHeader  = new QVBoxLayout();
+    _header->GetLayout()->addLayout(orientationSpecificHeader);
+    _header->AppendHorSpacer();
 
     QRadioButton *rpyInput = new QRadioButton();
-    QRadioButton *quatInput = new QRadioButton();
     rpyInput->setText("Euler (RPY)");
+
+    QRadioButton *quatInput = new QRadioButton();
     quatInput->setText("Quaternion (w,x,y,z)");
+
     if (_nInputs == 3)
         rpyInput->setChecked(true);
     else
         quatInput->setChecked(true);
-    radioButtonHolder->addWidget(new QLabel("Input type"));
-    radioButtonHolder->addWidget(rpyInput);
-    radioButtonHolder->addWidget(quatInput);
-    radioButtonHolder->addSpacerItem(new QSpacerItem (20,20,QSizePolicy::Expanding));
-    _header->GetLayout()->addLayout(radioButtonHolder);
-    _header->AppendHorSpacer();
-
+    orientationSpecificHeader->addWidget(new QLabel("Input type"));
+    orientationSpecificHeader->addWidget(rpyInput);
+    orientationSpecificHeader->addWidget(quatInput);
+    orientationSpecificHeader->addSpacerItem(new QSpacerItem (20,20,QSizePolicy::Expanding));
 
     connect(rpyInput, &QRadioButton::toggled,
             this, &OrientationWindow::InputTypeUpdated);
@@ -62,12 +64,12 @@ void OrientationWindow::_ConstructUI()
     _widget3d->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     windMainLayout->addWidget(_widget3d);
 
-    //  Make sure input channel dropdowns have updated list of channels
+    //  Make sure input channel drop-downs have updated list of channels
     QObject::connect(DataMultiplexer::GetP(),
                      &DataMultiplexer::ChannelsUpdated,
                      _header,
                      &graphHeaderWidget::UpdateChannelDropdown);
-    //  Handle dynamic channel selection by dropdown
+    //  Handle dynamic channel selection by drop-down
     QObject::connect(_header, &graphHeaderWidget::UpdateInputChannels,
                      this, &OrientationWindow::UpdateInputChannels);
 
@@ -122,8 +124,8 @@ void OrientationWindow::ReceiveData(double *data, uint8_t n)
 
 /**
  * @brief [Slot] Function that is called whenever input channel has been
- *      changed in the dropdown fields of the header. It updates the channel
- *      selection stored in this object.
+ *      changed in the drop-down fields of the header. It updates the channels
+ *      used as data sources for the plot.
  * @param inChannels    Array of 3 input channel indexes
  */
 void OrientationWindow::UpdateInputChannels(uint8_t *inChannels)

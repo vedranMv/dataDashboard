@@ -59,28 +59,28 @@ ScatterWindow::ScatterWindow()
     this->setWidget(_contWind);
 
 
-    _header = new graphHeaderWidget(3, false);
+    _header = new graphHeaderWidget(3);
     windMainLayout->addLayout(_header->GetLayout());
 
-    //  Expand header with scatter-specific fields
-    QVBoxLayout *scatterSpecific = new QVBoxLayout();
-    _header->GetLayout()->addLayout(scatterSpecific);
+    //  Header items for orientation plot
+    QVBoxLayout *scatterSpecificHeader = new QVBoxLayout();
+    _header->GetLayout()->addLayout(scatterSpecificHeader);
     _header->AppendHorSpacer();
 
     //  Data size line edit
-    scatterSpecific->addWidget(new QLabel("Data size (automatically updated)"));
+    scatterSpecificHeader->addWidget(new QLabel("Data size (automatically updated)"));
     QLineEdit *dataSizeLE = new QLineEdit();
     dataSizeLE->setValidator( new QIntValidator(1, dataSize*10, this) );
     dataSizeLE->setText(QString::number(dataSize));
     QObject::connect(dataSizeLE, &QLineEdit::textChanged,
                      this, &ScatterWindow::on_dataSize_changed);
-    scatterSpecific->addWidget(dataSizeLE);
+    scatterSpecificHeader->addWidget(dataSizeLE);
     //  Reset data set push button
     QPushButton *resetView = new QPushButton();
     resetView->setText("Reset data");
     QObject::connect(resetView, &QPushButton::pressed,
                      this, &ScatterWindow::on_resetData_pressed);
-    scatterSpecific->addWidget(resetView);
+    scatterSpecificHeader->addWidget(resetView);
 
 
     QWidget *graphCont = QWidget::createWindowContainer(_graph);
@@ -89,11 +89,11 @@ ScatterWindow::ScatterWindow()
     windMainLayout->addWidget(graphCont,1);
 
 
-    //  Handle dynamic channel selection by dropdown
+    //  Handle dynamic channel selection by drop-down
     QObject::connect(_header, &graphHeaderWidget::UpdateInputChannels,
                      this, &ScatterWindow::UpdateInputChannels);
 
-    //  Make sure input channel dropdowns have updated list of channels
+    //  Make sure input channel drop-downs have updated list of channels
     QObject::connect(DataMultiplexer::GetP(),
                      &DataMultiplexer::ChannelsUpdated,
                      _header,
@@ -133,7 +133,7 @@ ScatterWindow::ScatterWindow()
  */
 ScatterWindow::~ScatterWindow()
 {
-    qDebug() << "Destroying the scatter plot";
+    emit logLine("Destroying the scatter plot");
     DataMultiplexer::GetI().UnregisterGraph(this);
 
     QObject::disconnect(DataMultiplexer::GetP(),
@@ -152,25 +152,24 @@ ScatterWindow::~ScatterWindow()
 
 /**
  * @brief [Slot] Function that is called whenever input channel has been
- *      changed in the dropdown fields of the header. It updates the channel
- *      selection stored in this object.
+ *      changed in the drop-down fields of the header. It updates the channels
+ *      used as data sources for the plot.
  * @param inChannels    Array of 3 input channel indexes
  */
 void ScatterWindow::UpdateInputChannels(uint8_t *inChannels)
 {
-   _inputChannels[0] = inChannels[0];
-   _inputChannels[1] = inChannels[1];
-   _inputChannels[2] = inChannels[2];
+    _inputChannels[0] = inChannels[0];
+    _inputChannels[1] = inChannels[1];
+    _inputChannels[2] = inChannels[2];
 
-  _maxInChannel = 0;
-  for (uint8_t i = 0; i < 3; i++)
-      if (inChannels[i] > _maxInChannel)
-          _maxInChannel = inChannels[i];
+    _maxInChannel = 0;
+    for (uint8_t i = 0; i < 3; i++)
+        if (inChannels[i] > _maxInChannel)
+            _maxInChannel = inChannels[i];
 
-  QStringList chLabels = _header->GetChannelLabels();
-  _graph->axisX()->setTitle(chLabels[0]);
-  _graph->axisY()->setTitle(chLabels[1]);
-  _graph->axisZ()->setTitle(chLabels[2]);
+    _graph->axisX()->setTitle(_header->GetLabels()[0]->text());
+    _graph->axisY()->setTitle(_header->GetLabels()[0]->text());
+    _graph->axisZ()->setTitle(_header->GetLabels()[0]->text());
 }
 
 /**

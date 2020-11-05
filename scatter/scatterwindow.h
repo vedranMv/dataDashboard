@@ -55,6 +55,9 @@ public:
     void changeFont(const QFont &font);
     void setGridEnabled(int enabled);
 
+signals:
+    void logLine(const QString &line);
+
 public slots:
     void on_dataSize_changed(const QString &datasize);
     void on_resetData_pressed();

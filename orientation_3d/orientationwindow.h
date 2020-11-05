@@ -9,11 +9,15 @@
 
 class OrientationWindow : public QMdiSubWindow
 {
+    Q_OBJECT
 public:
     OrientationWindow(QWidget *parent);
     ~OrientationWindow();
 
     void ReceiveData(double *data, uint8_t n);
+
+signals:
+    void logLine(const QString &line);
 
 public slots:
     void UpdateInputChannels(uint8_t *inChannels);

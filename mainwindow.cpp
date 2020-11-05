@@ -88,13 +88,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->portBaud->setCurrentIndex(1);
 
     // 'Connect' button opens serial port connection
-    QObject::connect(ui->connectButton, &QPushButton::clicked, this, &MainWindow::toggleConnection);
+    QObject::connect(ui->connectButton, &QPushButton::clicked,
+                     this, &MainWindow::toggleConnection);
     //  Serial adapter objects logs data into a MainWindow logger
-    QObject::connect(dataAdapter, &SerialAdapter::logLine, this, &MainWindow::logLine);
+    QObject::connect(dataAdapter, &SerialAdapter::logLine,
+                     this, &MainWindow::logLine);
 
     //  Connect channel enable signals to slot
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
-        QObject::connect(mathChEnabled[i], &QCheckBox::clicked, this, &MainWindow::UpdateAvailMathCh);
+        QObject::connect(mathChEnabled[i], &QCheckBox::clicked,
+                         this, &MainWindow::UpdateAvailMathCh);
 
     //TODO: Add data bits, parity and flow control fields
     //  For now assume 8bits, no parity, no flow control, 1 stop bit
@@ -117,8 +120,10 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     //  Save port options
-    settings->setValue("port/name", ui->portSelector->itemText(ui->portSelector->currentIndex()));
-    settings->setValue("port/baud", ui->portBaud->itemText(ui->portBaud->currentIndex()));
+    settings->setValue("port/name",
+                       ui->portSelector->itemText(ui->portSelector->currentIndex()));
+    settings->setValue("port/baud",
+                       ui->portBaud->itemText(ui->portBaud->currentIndex()));
 
     settings->setValue("channel/startChar", ui->frameStartCh->text());
     settings->setValue("channel/separator", ui->frameChSeparator->text());
@@ -141,22 +146,26 @@ MainWindow::~MainWindow()
         QString id_str = QString::number(i);
 
 
-        settings->setValue("math/component"+id_str+"inCh", mathComp[i]->GetInCh());
-        settings->setValue("math/component"+id_str+"mathCh", mathComp[i]->GetMathCh());
-        settings->setValue("math/component"+id_str+"math", mathComp[i]->GetMath());
+        settings->setValue("math/component"+id_str+"inCh",
+                           mathComp[i]->GetInCh());
+        settings->setValue("math/component"+id_str+"mathCh",
+                           mathComp[i]->GetMathCh());
+        settings->setValue("math/component"+id_str+"math",
+                           mathComp[i]->GetMath());
     }
     settings->setValue("math/componentCount", mathComp.size());
 
     //  Save math channel labels
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
         if (mathChEnabled[i]->isChecked())
-            settings->setValue("math/channel"+QString::number(i+1)+"name",mathChName[i]->text());
+            settings->setValue("math/channel"+QString::number(i+1)+"name",
+                               mathChName[i]->text());
 
     //  Save file logging settings to file
-    settings->setValue("fileLogging/append",  ui->appendButton->isChecked());
-    settings->setValue("fileLogging/folder",  ui->logfilePath->text());
-    settings->setValue("fileLogging/fileName",  ui->logfileName->text());
-    settings->setValue("fileLogging/channelSeparator",  ui->logfileChSep->text());
+    settings->setValue("fileLogging/append", ui->appendButton->isChecked());
+    settings->setValue("fileLogging/folder", ui->logfilePath->text());
+    settings->setValue("fileLogging/fileName", ui->logfileName->text());
+    settings->setValue("fileLogging/channelSeparator", ui->logfileChSep->text());
 
 
     settings->sync();
@@ -181,14 +190,20 @@ void MainWindow::LoadSettings()
     settings = new QSettings(QString("config.ini"), QSettings::IniFormat);
 
     //  Data frame settings
-    ui->frameStartCh->setText(settings->value("channel/startChar","").toString());
-    ui->frameChSeparator->setText(settings->value("channel/separator","").toString());
-    ui->frameEndSep->setText(settings->value("channel/endChar","").toString());
-    ui->termSlashN->setChecked(settings->value("channel/endCharN","false").toBool());
-    ui->termSlashR->setChecked(settings->value("channel/endCharR","false").toBool());
+    ui->frameStartCh->setText(
+                settings->value("channel/startChar","").toString());
+    ui->frameChSeparator->setText(
+                settings->value("channel/separator","").toString());
+    ui->frameEndSep->setText(
+                settings->value("channel/endChar","").toString());
+    ui->termSlashN->setChecked(
+                settings->value("channel/endCharN","false").toBool());
+    ui->termSlashR->setChecked(
+                settings->value("channel/endCharR","false").toBool());
 
     //  Number of data channels
-    ui->channelNumber->setValue(settings->value("channel/numOfChannels","0").toInt());
+    ui->channelNumber->setValue(
+                settings->value("channel/numOfChannels","0").toInt());
 
     //  Read mask of enabled math channels and apply UI changes
     uint8_t mathChMask = settings->value("math/channelMask","0").toUInt();
@@ -204,11 +219,16 @@ void MainWindow::LoadSettings()
         on_addMathComp_clicked();
 
     //  Load file logging settings
-    ui->appendButton->setChecked(settings->value("fileLogging/append","true").toBool());
-    ui->overwriteButton->setChecked(!settings->value("fileLogging/append","true").toBool());
-    ui->logfilePath->setText(settings->value("fileLogging/folder","").toString());
-    ui->logfileName->setText(settings->value("fileLogging/fileName","").toString());
-    ui->logfileChSep->setText(settings->value("fileLogging/channelSeparator",",").toString());
+    ui->appendButton->setChecked(
+                settings->value("fileLogging/append","true").toBool());
+    ui->overwriteButton->setChecked(
+                !settings->value("fileLogging/append","true").toBool());
+    ui->logfilePath->setText(
+                settings->value("fileLogging/folder","").toString());
+    ui->logfileName->setText(
+                settings->value("fileLogging/fileName","").toString());
+    ui->logfileChSep->setText(
+                settings->value("fileLogging/channelSeparator",",").toString());
 }
 
 /**
@@ -259,7 +279,8 @@ void MainWindow::toggleConnection()
         delete[] chLabels;
 
         //  Configure serial port
-        dataAdapter->updatePort(ui->portSelector->itemText(ui->portSelector->currentIndex()), \
+        dataAdapter->updatePort(ui->portSelector->itemText(
+                                    ui->portSelector->currentIndex()), \
                                 ui->portBaud->itemText(ui->portBaud->currentIndex()));
         //  Prevent edits to serial port while connection is open
         ui->serialGroup->setEnabled(false);
@@ -331,10 +352,6 @@ void MainWindow::on_channelNumber_valueChanged(int arg1)
         entry->addWidget(tmp->channelName, 0, Qt::AlignLeft);
         ui->channelList->addLayout(entry);
     }
-
-    //  Update MUX settings
-
-    //  Update serial frame info
 }
 
 /**
@@ -364,7 +381,10 @@ void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
 ///     Math components UI manipulations
 ///
 ///////////////////////////////////////////////////////////////////////////////
-
+/**
+ * @brief Register a math channel with the given DI in the mux
+ * @param chID channel Id to be registered
+ */
 void MainWindow::RegisterMathChannel(uint8_t chID)
 {
     MathChannel *mc = new MathChannel();
@@ -410,7 +430,7 @@ void MainWindow::on_addMathComp_clicked()
 
 /**
  * @brief [Slot function] Update a list of available math channels used by
- *      other componenets. Function called whenever a match channel checkbox
+ *      other components. Function called whenever a match channel checkbox
  *      has been clicked
  */
 void MainWindow::UpdateAvailMathCh()
@@ -436,7 +456,9 @@ void MainWindow::UpdateAvailMathCh()
             //  Load channel name from settings, if it exists and there
             //  isn't one already set
             if (mathChName[i]->text() == "")
-                mathChName[i]->setText(settings->value("math/channel"+id_str+"name","Math "+id_str).toString());
+                mathChName[i]->setText(
+                            settings->value("math/channel"+id_str+"name",
+                                            "Math "+id_str).toString());
         }
         else
             mathChName[i]->setEnabled(false);
@@ -512,6 +534,8 @@ void MainWindow::on_add3D_clicked()
 
     OrientationWindow *orient3DWindow = new OrientationWindow(this);
     orient3DWindow->setObjectName("orientationWindow_"+winID);
+    QObject::connect(orient3DWindow, &OrientationWindow::logLine,
+                     this, &MainWindow::logLine);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(orient3DWindow);
 
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
@@ -533,6 +557,8 @@ void MainWindow::on_addScatter_clicked()
     //  Create scatter plot
     ScatterWindow *scatterWindow = new ScatterWindow();
     scatterWindow->setObjectName("scatterWindow_"+winID);
+    QObject::connect(scatterWindow, &ScatterWindow::logLine,
+                     this, &MainWindow::logLine);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(scatterWindow);
 
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
@@ -554,6 +580,8 @@ void MainWindow::on_addLine_clicked()
     //  Create line plot
     LinePlot *lineplotWindow = new LinePlot();
     lineplotWindow->setObjectName("lineWindow_"+winID);
+    QObject::connect(lineplotWindow, &LinePlot::logLine,
+                     this, &MainWindow::logLine);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(lineplotWindow);
 
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);

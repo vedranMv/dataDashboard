@@ -26,6 +26,10 @@ void LinePlot::_ConstructUI()
         _refresher->stop();
         DataMultiplexer::GetI().UnregisterGraph(this);
         disconnect(_refresher, SIGNAL(timeout()), _plot, SLOT(replot()));
+        disconnect(DataMultiplexer::GetP(),
+                         &DataMultiplexer::ChannelsUpdated,
+                         _header,
+                         &graphHeaderWidget::UpdateChannelDropdown);
         MainWindow::clearLayout(_contWind->layout());
     }
 

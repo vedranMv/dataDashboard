@@ -120,6 +120,11 @@ MainWindow::~MainWindow()
     settings->setValue("port/name", ui->portSelector->itemText(ui->portSelector->currentIndex()));
     settings->setValue("port/baud", ui->portBaud->itemText(ui->portBaud->currentIndex()));
 
+    settings->setValue("channel/startChar", ui->frameStartCh->text());
+    settings->setValue("channel/separator", ui->frameChSeparator->text());
+    settings->setValue("channel/endChar", ui->frameEndSep->text());
+    settings->setValue("channel/endCharR", ui->termSlashR->isChecked());
+    settings->setValue("channel/endCharN", ui->termSlashN->isChecked());
 
     //  Save channel settings
     for (uint8_t i = 0; i < ch.size(); i++)
@@ -179,6 +184,9 @@ void MainWindow::LoadSettings()
     ui->frameStartCh->setText(settings->value("channel/startChar","").toString());
     ui->frameChSeparator->setText(settings->value("channel/separator","").toString());
     ui->frameEndSep->setText(settings->value("channel/endChar","").toString());
+    ui->termSlashN->setChecked(settings->value("channel/endCharN","false").toBool());
+    ui->termSlashR->setChecked(settings->value("channel/endCharR","false").toBool());
+
     //  Number of data channels
     ui->channelNumber->setValue(settings->value("channel/numOfChannels","0").toInt());
 
@@ -283,32 +291,6 @@ void MainWindow::logLine(const QString &line)
 
     qDebug()<<time + ": " + line;
     //TODO: Log into a text file as well
-}
-
-
-/**
- * @brief [Slot function] Save starting character as soon as it's edited
- */
-void MainWindow::on_frameStartCh_editingFinished()
-{
-    settings->setValue("channel/startChar", ui->frameStartCh->text());
-    settings->sync();
-}
-/**
- * @brief [Slot function] Save channel separator character as soon as it's edited
- */
-void MainWindow::on_frameChSeparator_editingFinished()
-{
-    settings->setValue("channel/separator", ui->frameChSeparator->text());
-    settings->sync();
-}
-/**
- * @brief [Slot function] Save ending character as soon as it's edited
- */
-void MainWindow::on_frameEndSep_editingFinished()
-{
-    settings->setValue("channel/endChar", ui->frameEndSep->text());
-    settings->sync();
 }
 
 /**

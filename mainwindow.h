@@ -37,12 +37,6 @@ public slots:
     void on_delete_updateMathComp(uint8_t id);
 
 private slots:
-    void on_frameStartCh_editingFinished();
-
-    void on_frameChSeparator_editingFinished();
-
-    void on_frameEndSep_editingFinished();
-
     void on_channelNumber_valueChanged(int arg1);
 
     void on_addMathComp_clicked();

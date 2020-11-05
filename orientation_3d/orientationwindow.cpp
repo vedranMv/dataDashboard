@@ -28,6 +28,11 @@ void OrientationWindow::_ConstructUI()
     if (!_contWind->layout()->isEmpty())
     {
         DataMultiplexer::GetI().UnregisterGraph(this);
+        //  Make sure input channel drop-downs have updated list of channels
+        disconnect(DataMultiplexer::GetP(),
+                         &DataMultiplexer::ChannelsUpdated,
+                         _header,
+                         &graphHeaderWidget::UpdateChannelDropdown);
         MainWindow::clearLayout(_contWind->layout());
     }
 
@@ -77,6 +82,21 @@ void OrientationWindow::_ConstructUI()
         _inputChannels[i] = 0;
 
     _maxInChannel = 0;
+
+    //  Update channel names in the header
+    if (_nInputs == 3)
+    {
+        _header->GetLabels()[0]->setText("Roll");
+        _header->GetLabels()[1]->setText("Pitch");
+        _header->GetLabels()[2]->setText("Yaw");
+    }
+    else if (_nInputs == 4)
+    {
+        _header->GetLabels()[0]->setText("w");
+        _header->GetLabels()[1]->setText("x");
+        _header->GetLabels()[2]->setText("y");
+        _header->GetLabels()[3]->setText("z");
+    }
 
     //  Register with the mux
     DataMultiplexer::GetI().RegisterGraph(this->objectName(), _nInputs, this);

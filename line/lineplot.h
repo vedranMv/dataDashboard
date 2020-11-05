@@ -16,18 +16,30 @@ public:
     void UpdateInputChannels(uint8_t *inChannels);
     void ReceiveData(double *data, uint8_t n);
 
+signals:
+    void logLine(const QString &line);
+
 public slots:
-    void refresh();
+    void ChannelAdded();
+    void UpdateXaxis(const QString &_datasize);
 
 private:
+    void _ConstructUI();
+    uint8_t _nInputs;
+    QSemaphore _plotDataMutex;
+
     QWidget *_contWind;
     QCustomPlot *_plot;
+    QVBoxLayout *windMainLayout;
 
-    uint8_t _inputChannels[3];
+    QVector<uint8_t>_inputChannels;
     uint8_t _maxInChannel;
+    uint32_t _index;
 
     graphHeaderWidget *_header;
-    QVector<double> _inputCh[2];
+    QCheckBox *_autoAdjustYaxis;
+
+    QVector < QVector<double> >_inputCh;
     QVector<double> _xAxis;
     QTimer *_refresher;
 };

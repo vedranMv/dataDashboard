@@ -28,11 +28,13 @@ LinePlot::LinePlot()
     _plot = new QCustomPlot();
     _plot->addGraph();
     _plot->graph()->setPen(QPen(Qt::blue));
-    _plot->graph()->setBrush(QBrush(QColor(0, 0, 255, 20)));
+    //_plot->graph()->setBrush(QBrush(QColor(0, 0, 255, 20)));
     _plot->addGraph();
     _plot->graph()->setPen(QPen(Qt::red));
     _plot->axisRect()->setupFullAxesBox(true);
     _plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
+    _plot->axisRect()->setRangeZoom(Qt::Vertical);
+    _plot->axisRect()->setRangeDrag(Qt::Vertical);
     _plot->xAxis->setRange(-500, 0);
     _plot->yAxis->setRange(-1, 1);
 
@@ -99,12 +101,22 @@ void LinePlot::ReceiveData(double *data, uint8_t n)
     if (n < _maxInChannel)
         return;
 
-    _inputCh[0][ index ] = data[_inputChannels[0]];
-    _inputCh[1][ index ] = data[_inputChannels[1]];
+    if ((index+1) != dataLen)
+    {
+        _inputCh[0][ index ] = data[_inputChannels[0]];
+        _inputCh[1][ index ] = data[_inputChannels[1]];
+    } else
+    {
+        _inputCh[0].pop_front();
+        _inputCh[0].push_back(data[_inputChannels[0]]);
+        _inputCh[1].pop_front();
+        _inputCh[1].push_back(data[_inputChannels[1]]);
+    }
 
     _plot->graph(0)->setData(_xAxis, _inputCh[0]);
     _plot->graph(1)->setData(_xAxis, _inputCh[1]);
 
+    //  Automatically adjust range to 10% more than max value, and 10% less then min value
     if (_inputCh[0][ index ] < _plot->yAxis->range().lower)
         _plot->yAxis->setRange(_inputCh[0][ index ]*1.1, _plot->yAxis->range().upper);
     if (_inputCh[0][ index ] > _plot->yAxis->range().upper)
@@ -118,5 +130,6 @@ void LinePlot::ReceiveData(double *data, uint8_t n)
     //_plot->replot();
 
     // Add data to the plot
-    index = (index+1) % dataLen;
+    if ((index+1) != dataLen)
+        index = (index+1) % dataLen;
 }

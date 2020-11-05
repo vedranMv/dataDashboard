@@ -5,26 +5,25 @@
 
 #include <QHBoxLayout>
 #include <QComboBox>
-#include <vector>
+#include <QVector>
+#include <QLabel>
 
 class graphHeaderWidget : public QObject
 {
     Q_OBJECT
 
 public:
-    graphHeaderWidget(uint8_t chnnelNum, bool hasBoundaries);
+    graphHeaderWidget(uint8_t chnnelNum);
     ~graphHeaderWidget();
 
     void AppendHorSpacer();
     void UpdateChannelDropdown();
-    QStringList GetChannelLabels();
+
+    QVector<QLabel*>& GetLabels();
 
 public slots:
 
-    QHBoxLayout* GetLayout()
-    {
-        return _controlLayout;
-    }
+    QHBoxLayout* GetLayout();
 
 signals:
     void UpdateInputChannels(uint8_t *inChannels);
@@ -34,9 +33,11 @@ private slots:
 
 private:
 
-    QHBoxLayout *_controlLayout;
-    bool _bounded;
-    std::vector<QComboBox*>inCh;
+    QHBoxLayout *_mainLayout;
+
+    //  List of dynamically constructed UI elements
+    QVector<QComboBox*>_inCh;
+    QVector<QLabel*>_inChLabel;
     QWidget *_parent;
     uint8_t *_inputChannelList;
 };

@@ -67,6 +67,7 @@ void LinePlot::_ConstructUI()
     //  Textbox to update the size of x-axis
     QLineEdit *xAxisSize = new QLineEdit();
     xAxisSize->setValidator( new QIntValidator(10, 5000, this) );
+    xAxisSize->setToolTip("Change the length of X axis: Number of past samples used to plot the curve with");
     xAxisSize->setText( QString::number(_XaxisSize) );
     connect(xAxisSize, &QLineEdit::textChanged, this, &LinePlot::UpdateXaxis);
     lineSpecificHeader->addWidget(new QLabel("X axis size"));

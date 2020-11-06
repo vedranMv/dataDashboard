@@ -71,6 +71,7 @@ ScatterWindow::ScatterWindow()
     scatterSpecificHeader->addWidget(new QLabel("Data size (automatically updated)"));
     QLineEdit *dataSizeLE = new QLineEdit();
     dataSizeLE->setValidator( new QIntValidator(1, dataSize*10, this) );
+    dataSizeLE->setToolTip("Change the number of past data points kept in the graph");
     dataSizeLE->setText(QString::number(dataSize));
     QObject::connect(dataSizeLE, &QLineEdit::textChanged,
                      this, &ScatterWindow::on_dataSize_changed);

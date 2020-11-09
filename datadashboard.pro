@@ -29,7 +29,7 @@ SOURCES += main.cpp scatter/scatterwindow.cpp \
         orientation_3d/orientationwidget.cpp \
         orientation_3d/geometryengine.cpp \
         orientation_3d/orientationwindow.cpp \
-        serialadapter/serialadapter.cpp
+        serialAdapter/serialadapter.cpp
 
 
 HEADERS += scatter/scatterwindow.h \
@@ -43,7 +43,7 @@ HEADERS += scatter/scatterwindow.h \
     orientation_3d/orientationwindow.h \
     orientation_3d/orientationwidget.h \
     orientation_3d/geometryengine.h \
-    serialAdapter/serialAdapter.h
+    serialAdapter/serialadapter.h
 
 RESOURCES += \
     orientation_3d/resources/shaders.qrc \

@@ -153,7 +153,7 @@ MainWindow::~MainWindow()
         settings->setValue("math/component"+id_str+"math",
                            mathComp[i]->GetMath());
     }
-    settings->setValue("math/componentCount", mathComp.size());
+    settings->setValue("math/componentCount", (uint8_t)mathComp.size());
 
     //  Save math channel labels
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)

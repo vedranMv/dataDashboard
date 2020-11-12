@@ -11,7 +11,7 @@ workspace:
   path: dataDashboard
 
 steps:
-- name: build-tag
+- name: build-release-win64
   pull: never
   image: qt-win64builder:5.15.1
   commands:
@@ -20,19 +20,19 @@ steps:
   - "make -j4"
   - "rm release/*.o release/*.cpp"
   - "cp ../LICENSE release/LICENSE.txt"
-  - "zip -jr Data_dashboard-${DRONE_TAG##v}.zip release/"
+  - "zip -jr /Data_dashboard-${DRONE_TAG##v}-win64.zip release/"
   when:
     event:
     - tag
 
-- name: publish-release
+- name: publish-release-win64
   pull: always
   image: plugins/gitea-release
   settings:
     api_key:
       from_secret: gitea_api_key
     base_url: https://git.vedran.ml
-    files: "Data_dashboard-${DRONE_TAG##v}.zip"
+    files: "/Data_dashboard-${DRONE_TAG##v}-win64.zip"
     checksum:
       - md5
       - sha1

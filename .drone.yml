@@ -18,9 +18,9 @@ steps:
   - "mkdir build && cd build"
   - "/opt/qt5.11/win64/bin/qmake -config release ../datadashboard.pro"
   - "make -j4"
-  - "rm release/*.o release/*.cpp"
+  - "rm release/*.o release/*.cpp release/*.h release/*.qrc"
   - "cp ../LICENSE release/LICENSE.txt"
-  - "zip -jr /Data_dashboard-${DRONE_TAG##v}-win64.zip release/"
+  - "zip -jr Data_dashboard-${DRONE_TAG##v}-win64.zip release/"
   when:
     event:
     - tag
@@ -32,7 +32,7 @@ steps:
     api_key:
       from_secret: gitea_api_key
     base_url: https://git.vedran.ml
-    files: "/Data_dashboard-${DRONE_TAG##v}-win64.zip"
+    files: "/workspace/dataDashboard/build/Data_dashboard-${DRONE_TAG##v}-win64.zip"
     checksum:
       - md5
       - sha1

@@ -1,51 +1,50 @@
-    ---
-    kind: pipeline
-    name: linux-amd64
+---
+kind: pipeline
+name: linux-amd64
 
-    platform:
-      os: linux
-      arch: amd64
+platform:
+  os: linux
+  arch: amd64
 
-    workspace:
-      base: /workspace
-      path: dataDashboard
+workspace:
+  base: /workspace
+  path: dataDashboard
 
-    steps:
-    - name: build-release-win64
-      pull: never
-      image: qt-win64builder:5.15.1
-      commands:
-      - "mkdir build && cd build"
-      - "/opt/qt5.11/win64/bin/qmake -config release ../datadashboard.pro"
-      - "make -j4"
-      - "copy-libraries /workspace/dataDashboard/build/release"
-      - "rm release/*.o release/*.cpp release/*.h release/*.qrc"
-      - "cp ../LICENSE release/LICENSE.txt"
-      - "cp ../README.md release/README.md"
-      - "zip -jr Data_dashboard-${DRONE_TAG##v}-win64.zip release/"
-      when:
-        event:
-        - tag
+steps:
+- name: build-release-win64
+  pull: never
+  image: qt-win64builder:5.15.1
+  commands:
+  - "mkdir build && cd build"
+  - "/opt/qt5.11/win64/bin/qmake -config release ../datadashboard.pro"
+  - "make -j4"
+  - "copy-libraries /workspace/dataDashboard/build/release"
+  - "rm release/*.o release/*.cpp release/*.h release/*.qrc"
+  - "cp ../LICENSE release/LICENSE.txt"
+  - "zip -jr Data_dashboard-${DRONE_TAG##v}-win64.zip release/"
+  when:
+    event:
+    - tag
 
-    - name: publish-release-win64
-      pull: always
-      image: plugins/gitea-release
-      settings:
-        api_key:
-          from_secret: gitea_api_key
-        base_url: https://git.vedran.ml
-        files: "/workspace/dataDashboard/build/Data_dashboard-${DRONE_TAG##v}-win64.zip"
-        checksum:
-          - md5
-          - sha1
-          - sha256
-      when:
-        event: tag
+- name: publish-release-win64
+  pull: always
+  image: plugins/gitea-release
+  settings:
+    api_key:
+      from_secret: gitea_api_key
+    base_url: https://git.vedran.ml
+    files: "/workspace/dataDashboard/build/Data_dashboard-${DRONE_TAG##v}-win64.zip"
+    checksum:
+      - md5
+      - sha1
+      - sha256
+  when:
+    event: tag
 
-    trigger:
-      ref:
-      - refs/heads/master
-      - "refs/tags/**"
-      - "refs/pull/**"
+trigger:
+  ref:
+  - refs/heads/master
+  - "refs/tags/**"
+  - "refs/pull/**"
 
-    ...
+...

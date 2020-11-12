@@ -18,6 +18,7 @@ steps:
   - "mkdir build && cd build"
   - "/opt/qt5.11/win64/bin/qmake -config release ../datadashboard.pro"
   - "make -j4"
+  - "copy-libraries /workspace/dataDashboard/build/release"
   - "rm release/*.o release/*.cpp release/*.h release/*.qrc"
   - "cp ../LICENSE release/LICENSE.txt"
   - "zip -jr Data_dashboard-${DRONE_TAG##v}-win64.zip release/"

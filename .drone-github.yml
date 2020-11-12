@@ -1,6 +1,6 @@
 ---
 kind: pipeline
-name: linux-amd64
+name: win64
 
 platform:
   os: linux
@@ -47,4 +47,4 @@ trigger:
   - "refs/tags/**"
   - "refs/pull/**"
 
-    ...
+...

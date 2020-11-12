@@ -1,6 +1,6 @@
 ---
 kind: pipeline
-name: linux-amd64
+name: win64
 
 platform:
   os: linux
@@ -21,6 +21,7 @@ steps:
   - "copy-libraries /workspace/dataDashboard/build/release"
   - "rm release/*.o release/*.cpp release/*.h release/*.qrc"
   - "cp ../LICENSE release/LICENSE.txt"
+  - "cp ../README.md release/README.md"
   - "zip -jr Data_dashboard-${DRONE_TAG##v}-win64.zip release/"
   when:
     event:

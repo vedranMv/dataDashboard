@@ -1,6 +1,6 @@
-Data dashboard
+[Data dashboard](https://github.com/vedranMv/dataDashboard) [![Build Status](https://ci1.vedran.ml/api/badges/vedranMv/dataDashboard/status.svg)](https://ci1.vedran.ml/vedranMv/dataDashboard)
 =======
-(QT based app for data visualization)
+ (QT based app for data visualization)
 
 Data dashboard is a program based on QT framework that can be used to to visualize some of the common data types that one comes in contact when working with sensors. Although it was developed as during my work with IMU, and is mostly centered around it, it should be versatile enough for other sensors and purposes as well.
 
@@ -22,16 +22,16 @@ https://vedran.ml/public/projects/datadashboard/demo.mp4
 ## How to run
 ### Windows
 On windows:
-* Download QT Creator and compile the source from this repo
 * Download a portable precompiled version from [Releases](https://github.com/vedranMv/dataDashboard/releases)
+* Download QT Creator and compile the source from this repo
 
 ### Linux
 There are several dependencies for running on linux systems, regardless of which method below you go with:
 > ``sudo apt-get install libgl1-mesa-dev libfontconfig1 libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev libxcb-shape0-dev libxcb-xkb-dev``
 
 After that, it's possible to:
+* (Ubuntu) Download a precompiled, statically linked version from [Releases](https://github.com/vedranMv/) (coming soon)
 * Compile the project yourself, following the guide below 
-* (Ubuntu) Download a precompiled, statically linked version from [Releases](https://github.com/vedranMv/)
 
 ### Compilation on linux
 

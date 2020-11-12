@@ -29,11 +29,10 @@
 
     - name: publish-release-win64
       pull: always
-      image: plugins/gitea-release
+      image: plugins/github-release
       settings:
         api_key:
-          from_secret: gitea_api_key
-        base_url: https://git.vedran.ml
+          from_secret: github_api_key
         files: "/workspace/dataDashboard/build/Data_dashboard-${DRONE_TAG##v}-win64.zip"
         checksum:
           - md5

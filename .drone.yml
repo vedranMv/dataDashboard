@@ -1,0 +1,44 @@
+    ---
+    kind: pipeline
+    name: linux-amd64
+
+    platform:
+      os: linux
+      arch: amd64
+
+    - name: build-tag
+      pull: always
+      image: qt-win64builder:5.15.1
+      commands:
+      - "mkdir build && cd build"
+      - "/opt/qt5.11/win64/bin/qmake -config release ../datadashboard.pro"
+      - "make -j4"
+      - "rm release/*.o release/*.cpp"
+      - "cp ../LICENSE release/LICENSE.txt"
+      - "zip -jr Data_dashboard-${DRONE_TAG##v}.zip release/"
+      when:
+        event:
+        - tag
+
+    - name: publish-release
+      pull: always
+      image: plugins/gitea-release
+      settings:
+        api_key:
+          from_secret: gitea_api_key
+        base_url: https://git.vedran.ml
+        files: "Data_dashboard-${DRONE_TAG##v}.zip"
+        checksum:
+          - md5
+          - sha1
+          - sha256
+      when:
+        event: tag
+
+    trigger:
+      ref:
+      - refs/heads/master
+      - "refs/tags/**"
+      - "refs/pull/**"
+
+    ...

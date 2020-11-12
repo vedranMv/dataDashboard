@@ -12,7 +12,7 @@ workspace:
 
 steps:
 - name: build-tag
-  pull: always
+  pull: never
   image: qt-win64builder:5.15.1
   commands:
   - "mkdir build && cd build"

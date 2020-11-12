@@ -7,7 +7,7 @@ platform:
   arch: amd64
 
 workspace:
-  base: /
+  base: /workspace
   path: dataDashboard
 
 steps:

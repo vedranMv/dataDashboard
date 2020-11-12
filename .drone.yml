@@ -19,6 +19,7 @@ steps:
   - "/opt/qt5.11/win64/bin/qmake -config release ../datadashboard.pro"
   - "make -j4"
   - "rm release/*.o release/*.cpp"
+  - "ls -al"
   - "cp ../LICENSE release/LICENSE.txt"
   - "zip -jr Data_dashboard-${DRONE_TAG##v}.zip release/"
   when:

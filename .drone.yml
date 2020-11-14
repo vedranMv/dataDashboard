@@ -1,6 +1,6 @@
 ---
 kind: pipeline
-name: win64
+name: build-release
 
 platform:
   os: linux
@@ -27,7 +27,6 @@ steps:
     event:
     - tag
 
-steps:
 - name: build-release-ubuntu
   pull: never
   image: qt-ubuntu16builder:5.15.1
@@ -50,8 +49,9 @@ steps:
     api_key:
       from_secret: gitea_api_key
     base_url: https://git.vedran.ml
-    files: "/workspace/dataDashboard/build-win64/Data_dashboard-${DRONE_TAG##v}-win64.zip"
-    files: "/workspace/dataDashboard/build-amd64/Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64.zip"
+    files: 
+      - "/workspace/dataDashboard/build-win64/Data_dashboard-${DRONE_TAG##v}-win64.zip"
+      - "/workspace/dataDashboard/build-amd64/DistributionKit/Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64.zip"
     checksum:
       - md5
       - sha1

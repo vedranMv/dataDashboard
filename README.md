@@ -1,4 +1,4 @@
-[Data dashboard](https://github.com/vedranMv/dataDashboard) [![Build Status](https://ci1.vedran.ml/api/badges/vedranMv/dataDashboard/status.svg)](https://ci1.vedran.ml/vedranMv/dataDashboard)
+[Data dashboard](https://github.com/vedranMv/dataDashboard) [![Build Status](https://ci1.vedran.ml/api/badges/vedranMv/dataDashboard/status.svg)](https://ci1.vedran.ml/vedranMv/dataDashboard) [![License](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)](/License)
 =======
  (QT based app for data visualization)
 
@@ -21,8 +21,8 @@ https://vedran.ml/public/projects/datadashboard/demo.mp4
 
 ## How to run
 ### Windows
-On windows:
-* Download a portable precompiled version from [Releases](https://github.com/vedranMv/dataDashboard/releases)
+
+* Download a portable (statically linked) precompiled version from [Releases](https://github.com/vedranMv/dataDashboard/releases)
 * Download QT Creator and compile the source from this repo
 
 ### Linux
@@ -30,8 +30,9 @@ There are several dependencies for running on linux systems, regardless of which
 > ``sudo apt-get install libgl1-mesa-dev libfontconfig1 libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev libxcb-shape0-dev libxcb-xkb-dev``
 
 After that, it's possible to:
-* (Ubuntu) Download a precompiled, statically linked version from [Releases](https://github.com/vedranMv/) (coming soon)
-* Compile the project yourself, following the guide below 
+* (Ubuntu) Download a precompiled (dynamically linked), version from [Releases](https://github.com/vedranMv/) and launch ``datadashboard.sh``
+* Install QT creator and compile from scratch
+* Compile the project yourself, following the guide below
 
 ### Compilation on linux
 
@@ -51,3 +52,11 @@ After that, it's possible to:
 
 5. Run the program
 > ``./datadashboard``
+
+## Known issues
+* Ubuntu 16.04/18.04: Launching scatter plot crashes the program (in Ubuntu 20.04 works as expected)
+
+## Acknowledgments
+Made using:
+* QT framework
+* [CQtDeployer](https://github.com/QuasarApp/CQtDeployer) part of CI pipeline for ubuntu

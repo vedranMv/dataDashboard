@@ -15,10 +15,10 @@ steps:
   pull: never
   image: qt-win64builder:5.15.1
   commands:
-  - "mkdir build && cd build"
+  - "mkdir build-win64 && cd build-win64"
   - "/opt/qt5.11/win64/bin/qmake -config release ../datadashboard.pro"
   - "make -j4"
-  - "copy-libraries /workspace/dataDashboard/build/release"
+  - "copy-libraries /workspace/dataDashboard/build-win64/release"
   - "rm release/*.o release/*.cpp release/*.h release/*.qrc"
   - "cp ../LICENSE release/LICENSE.txt"
   - "cp ../README.md release/README.md"
@@ -27,14 +27,31 @@ steps:
     event:
     - tag
 
-- name: publish-release-win64
+steps:
+- name: build-release-ubuntu
+  pull: never
+  image: qt-ubuntu16builder:5.15.1
+  commands:
+  - "mkdir build-amd64 && cd build-amd64"
+  - "/opt/qt5.11/amd64/bin/qmake -config release ../datadashboard.pro"
+  - "make -j4"
+  - "cqtdeployer -qmake /opt/qt5.11/amd64/bin/qmake -bin datadashboard"
+  - "cp ../LICENSE DistributionKit/LICENSE.txt"
+  - "cp ../README.md DistributionKit/README.md"
+  - "cd DistributionKit && zip -r Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64.zip *"
+  when:
+    event:
+    - tag
+
+- name: publish-release
   pull: always
   image: plugins/gitea-release
   settings:
     api_key:
       from_secret: gitea_api_key
     base_url: https://git.vedran.ml
-    files: "/workspace/dataDashboard/build/Data_dashboard-${DRONE_TAG##v}-win64.zip"
+    files: "/workspace/dataDashboard/build-win64/Data_dashboard-${DRONE_TAG##v}-win64.zip"
+    files: "/workspace/dataDashboard/build-amd64/Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64.zip"
     checksum:
       - md5
       - sha1

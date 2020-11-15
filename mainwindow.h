@@ -70,6 +70,10 @@ private:
     std::vector<QCheckBox*>mathChEnabled;
     std::vector<QLineEdit*>mathChName;
     std::vector<Q3DScatter*>plots;
+
+    //  Program run log
+    QFile *_logFile;
+    QTextStream *_logFileStream;
 };
 
 #endif // MAINWINDOW_H

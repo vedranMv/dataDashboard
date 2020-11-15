@@ -51,10 +51,11 @@ MainWindow::MainWindow(QWidget *parent) :
     mathChName.push_back(ui->mathCh5name);
     mathChName.push_back(ui->mathCh6name);
 
-    //  Initialize the variables
+    //  Initialize objects
     dataAdapter = new SerialAdapter();
     mainTimer = new QTimer();
     mux = DataMultiplexer::GetP();
+    settings = new QSettings(QString("config.ini"), QSettings::IniFormat);
 
     //void response(const QString &s);
     connect(dataAdapter, &SerialAdapter::response, mux, &DataMultiplexer::ReceiveSerialData);
@@ -178,6 +179,10 @@ MainWindow::~MainWindow()
         delete X;
     mathComp.clear();
 
+    //  Clean-up for program run log
+    _logFile->close();
+    delete _logFileStream;
+    _logFile->deleteLater();
 
     delete ui;
 }
@@ -187,8 +192,6 @@ MainWindow::~MainWindow()
  */
 void MainWindow::LoadSettings()
 {
-    settings = new QSettings(QString("config.ini"), QSettings::IniFormat);
-
     //  Data frame settings
     ui->frameStartCh->setText(
                 settings->value("channel/startChar","").toString());
@@ -301,17 +304,43 @@ void MainWindow::toggleConnection()
 }
 
 /**
- * @brief [Slot function] Log a line to UI and text file
+ * @brief [Slot function] Log a line to UI and an external run log file
  * @param line
  */
 void MainWindow::logLine(const QString &line)
 {
+    static bool initialized = false;
+
     QString time = QDateTime::currentDateTime().time().toString();
+
+    //  Handle opening and rotating logs between the program launches. On
+    //  every launch, increments the log descriptor and open new logfile to
+    //  write to.
+    if (!initialized)
+    {
+        //  Load logfile info
+        uint8_t lastLogIndex = settings->value("appLog/index","0").toUInt();
+        const uint8_t maxLogIndex = settings->value("appLog/maxIndex","5").toUInt();
+
+        uint8_t currentLogIndex = (lastLogIndex + 1) % maxLogIndex;
+        _logFile = new QFile("datadashboard_run"+QString::number(currentLogIndex)+".log");
+
+        if (!_logFile->open(QIODevice::WriteOnly | QIODevice::Text))
+        {
+            ui->logLine->setText(time + ": " + "Error opening log file");
+            return;
+        }
+
+        _logFileStream = new QTextStream(_logFile);
+        settings->setValue("appLog/index", currentLogIndex);
+        initialized = true;
+    }
 
     ui->logLine->setText(time + ": " + line);
 
-    qDebug()<<time + ": " + line;
-    //TODO: Log into a text file as well
+    //  If log file is initialized, append a line in there as well
+    if (initialized)
+        (*_logFileStream) <<  time + ": " + line << Qt::endl;
 }
 
 /**

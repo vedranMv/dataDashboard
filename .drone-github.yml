@@ -22,7 +22,9 @@ steps:
   - "rm release/*.o release/*.cpp release/*.h release/*.qrc"
   - "cp ../LICENSE release/LICENSE.txt"
   - "cp ../README.md release/README.md"
-  - "zip -jr Data_dashboard-${DRONE_TAG##v}-win64.zip release/"
+  - "cp ../config.ini release/config.ini"
+  - "mv release Data_dashboard-${DRONE_TAG##v}-win64"
+  - "zip -r Data_dashboard-${DRONE_TAG##v}-win64.zip Data_dashboard-${DRONE_TAG##v}-win64/"
   when:
     event:
     - tag
@@ -35,9 +37,12 @@ steps:
   - "/opt/qt5.11/amd64/bin/qmake -config release ../datadashboard.pro"
   - "make -j4"
   - "cqtdeployer -qmake /opt/qt5.11/amd64/bin/qmake -bin datadashboard"
+  - "cp /usr/lib/x86_64-linux-gnu/libpng12.so.0 DistributionKit/lib"
   - "cp ../LICENSE DistributionKit/LICENSE.txt"
   - "cp ../README.md DistributionKit/README.md"
-  - "cd DistributionKit && zip -r Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64.zip *"
+  - "cp ../config.ini DistributionKit/config.ini"
+  - "mv DistributionKit Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64"
+  - "zip -r Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64.zip Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64/"
   when:
     event:
     - tag
@@ -50,7 +55,7 @@ steps:
       from_secret: github_api_key
     files: 
       - "/workspace/dataDashboard/build-win64/Data_dashboard-${DRONE_TAG##v}-win64.zip"
-      - "/workspace/dataDashboard/build-amd64/DistributionKit/Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64.zip"
+      - "/workspace/dataDashboard/build-amd64/Data_dashboard-${DRONE_TAG##v}-ubuntu-amd64.zip"
     checksum:
       - md5
       - sha1

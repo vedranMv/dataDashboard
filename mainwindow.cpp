@@ -172,6 +172,8 @@ MainWindow::~MainWindow()
     settings->setValue("fileLogging/fileName", ui->logfileName->text());
     settings->setValue("fileLogging/channelSeparator", ui->logfileChSep->text());
 
+    //  Save currently open page
+    settings->setValue("ui/startPage", ui->tabWidget->currentIndex());
 
     settings->sync();
 
@@ -237,6 +239,9 @@ void MainWindow::LoadSettings()
                 settings->value("fileLogging/fileName","").toString());
     ui->logfileChSep->setText(
                 settings->value("fileLogging/channelSeparator",",").toString());
+
+    //  Restore last opened tab
+    ui->tabWidget->setCurrentIndex(settings->value("ui/startPage","0").toUInt());
 }
 
 /**

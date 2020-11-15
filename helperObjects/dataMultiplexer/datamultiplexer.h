@@ -18,8 +18,8 @@
 #include <scatter/scatterwindow.h>
 #include <line/lineplot.h>
 
-#include "GraphClient.h"
-#include "MathChannel.h"
+#include "graphclient.h"
+#include "mathchannel.h"
 
 /**
  * @brief The DataMultiplexer class

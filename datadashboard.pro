@@ -1,21 +1,6 @@
-android|ios|winrt {
-    error( "This example is not supported for android, ios, or winrt." )
-}
-
-INCLUDEPATH += ./include
-
-LIBS += -L$$OUT_PWD/../../../lib
-
 TEMPLATE = app
 
-QT += datavisualization
-
-contains(TARGET, qml.*) {
-    QT += qml quick
-}
-
-target.path = ./build/$$TARGET
-INSTALLS += target
+QT += datavisualization core gui widgets serialport printsupport
 
 
 SOURCES += main.cpp scatter/scatterwindow.cpp \
@@ -34,9 +19,9 @@ SOURCES += main.cpp scatter/scatterwindow.cpp \
 
 HEADERS += scatter/scatterwindow.h \
     helperObjects/channel/channel.h \
-    helperObjects/dataMultiplexer/GraphClient.h \
-    helperObjects/dataMultiplexer/MathChannel.h \
     helperObjects/dataMultiplexer/datamultiplexer.h \
+    helperObjects/dataMultiplexer/graphclient.h \
+    helperObjects/dataMultiplexer/mathchannel.h \
     helperObjects/graphHeaderWidget/graphheaderwidget.h \
     helperObjects/mathComponent/mathchannelcomponent.h \
     line/lineplot.h \
@@ -52,7 +37,6 @@ RESOURCES += \
     orientation_3d/resources/textures.qrc \
     config.ini
 
-QT += core gui widgets serialport printsupport
 requires(qtConfig(combobox))
 requires(qtConfig(fontcombobox))
 

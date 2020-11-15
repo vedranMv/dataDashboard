@@ -57,6 +57,7 @@ private:
     void RegisterMathChannel(uint8_t chID);
 
     Ui::MainWindow *ui;
+    bool _pendingDeletion;
     SerialAdapter *dataAdapter;
 
     QSettings   *settings;
@@ -74,6 +75,7 @@ private:
     //  Program run log
     QFile *_logFile;
     QTextStream *_logFileStream;
+    bool _loggingInitialized;
 };
 
 #endif // MAINWINDOW_H

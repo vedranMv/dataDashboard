@@ -160,8 +160,6 @@ void DataMultiplexer::_InternalChannelUpdate()
 //    if (_channelCount[SignalSource::AllChannels] != 0)
 //        delete [] _channelData;
 
-
-    emit logLine(tr("Deleting channel list of size %2"));
     //  Compute new number total of channels
     _channelCount[SignalSource::AllChannels] =
             _channelCount[SignalSource::SerialSignal] +
@@ -176,10 +174,10 @@ void DataMultiplexer::_InternalChannelUpdate()
 }
 
 /**
- * @brief DataMultiplexer::RegisterGraph
- * @param name
- * @param nInChannels
- * @param receiver
+ * @brief Register orientation plot
+ * @param name Name of the plot
+ * @param nInChannels Number of input channels
+ * @param receiver Pointer to graph object
  */
 void DataMultiplexer::RegisterGraph(QString name,
                                 uint8_t nInChannels,
@@ -188,12 +186,11 @@ void DataMultiplexer::RegisterGraph(QString name,
     _Graphs.push_back(new GraphClient(name,nInChannels,receiver));
     emit logLine("Registered graph "+name);
 }
-
 /**
- * @brief DataMultiplexer::RegisterGraph
- * @param name
- * @param nInChannels
- * @param receiver
+ * @brief Register scatter plot
+ * @param name Name of the plot
+ * @param nInChannels Number of input channels
+ * @param receiver Pointer to graph object
  */
 void DataMultiplexer::RegisterGraph(QString name,
                                 uint8_t nInChannels,
@@ -202,7 +199,12 @@ void DataMultiplexer::RegisterGraph(QString name,
     _Graphs.push_back(new GraphClient(name,nInChannels,receiver));
     emit logLine("Registered graph "+name);
 }
-
+/**
+ * @brief Register line plot
+ * @param name Name of the plot
+ * @param nInChannels Number of input channels
+ * @param receiver Pointer to graph object
+ */
 void DataMultiplexer::RegisterGraph(QString name,
                                 uint8_t nInChannels,
                                 LinePlot* receiver)
@@ -213,8 +215,8 @@ void DataMultiplexer::RegisterGraph(QString name,
 
 
 /**
- * @brief DataMultiplexer::UnregisterGraph
- * @param reciver
+ * @brief Unregister orientation plot
+ * @param reciver Pointer to graph object
  */
 void DataMultiplexer::UnregisterGraph(OrientationWindow* reciver)
 {
@@ -230,7 +232,10 @@ void DataMultiplexer::UnregisterGraph(OrientationWindow* reciver)
     }
     emit logLine("Unregistered graph "+name);
 }
-
+/**
+ * @brief Unregister scatter plot
+ * @param reciver Pointer to graph object
+ */
 void DataMultiplexer::UnregisterGraph(ScatterWindow* reciver)
 {
     QString name("");
@@ -245,7 +250,10 @@ void DataMultiplexer::UnregisterGraph(ScatterWindow* reciver)
     }
     emit logLine("Unregistered graph "+name);
 }
-
+/**
+ * @brief Unregister line plot
+ * @param reciver Pointer to graph object
+ */
 void DataMultiplexer::UnregisterGraph(LinePlot* reciver)
 {
     QString name("");
@@ -261,8 +269,17 @@ void DataMultiplexer::UnregisterGraph(LinePlot* reciver)
     emit logLine("Unregistered graph "+name);
 }
 
+/**
+ * @brief Enable logging data into a file
+ * @param logPath System path to log file
+ * @param append If true, append data to existing file. If false, overwrite
+ *      existing file
+ * @param chSep Channel separator character
+ * @return 0 on success, -1 otherwise
+ */
 int DataMultiplexer::EnableFileLogging(const QString &logPath, bool append, char chSep)
 {
+    emit logLine("Enabling logging to file "+logPath);
     _logFile = new QFile(logPath);
 
     QIODevice::OpenMode flags = QIODevice::WriteOnly | QIODevice::Text;
@@ -282,8 +299,14 @@ int DataMultiplexer::EnableFileLogging(const QString &logPath, bool append, char
     _logToFile = true;
     return 0;
 }
+
+/**
+ * @brief Disabling logging to file
+ */
 void DataMultiplexer::DisableFileLogging()
 {
+    logLine("Waiting on mutex to disable file logging");
+
     _logToFile = false;
     _SerialdataReady.acquire(2);
 
@@ -293,11 +316,14 @@ void DataMultiplexer::DisableFileLogging()
     _logFile->deleteLater();
 
     _SerialdataReady.release(1);
+
+    logLine("File logging disabled");
 }
 
 
 /**
- * @brief DataMultiplexer::ComputeMathChannels
+ * @brief Compute math channel values from input values
+ *      Called from data handling thread
  */
 void DataMultiplexer::_ComputeMathChannels()
 {
@@ -327,10 +353,10 @@ void DataMultiplexer::_ComputeMathChannels()
  */
 void DataMultiplexer::ReceiveSerialData(const QString &buffer)
 {
-    //emit logLine("Waiting to acquire");
+
     _SerialdataReady.acquire(1);
     _buffer += buffer;
-    //emit logLine("Acquired, running");
+
     if (!isRunning() && !_threadQuit)
     {
         //  External process use this flag to control thread, avoid
@@ -470,8 +496,6 @@ void DataMultiplexer::run()
                 //  We can only get to here if the terminating sequence has
                 //  been found. Add the last number detected before the sequence
                 chnValues.append(tmpNumber);
-//                if (chnValues.size() != 3)
-//                    qDebug()<<chnValues.size();
             }
 
             //  Check for discrepancy in channel count

@@ -19,7 +19,7 @@ OrientationWindow::OrientationWindow(QWidget *parent): _nInputs(3)
 
 OrientationWindow::~OrientationWindow()
 {
-    emit logLine("Deleting orientation window");
+    emit logLine("3D: Destroying the plot");
     DataMultiplexer::GetI().UnregisterGraph(this);
 }
 
@@ -27,6 +27,7 @@ void OrientationWindow::_ConstructUI()
 {
     if (!_contWind->layout()->isEmpty())
     {
+        emit logLine("3D: Deconstructing existing UI");
         DataMultiplexer::GetI().UnregisterGraph(this);
         //  Make sure input channel drop-downs have updated list of channels
         disconnect(DataMultiplexer::GetP(),
@@ -35,6 +36,14 @@ void OrientationWindow::_ConstructUI()
                          &graphHeaderWidget::UpdateChannelDropdown);
         MainWindow::clearLayout(_contWind->layout());
     }
+
+    QString mode = "";
+    if (_nInputs == 3)
+        mode = "Euler mode";
+    else
+        mode = "Quaternion mode";
+
+    emit logLine("3D: Constructing new UI in " + mode);
 
     //  Basic header with input channel drop-downs
     _header = new graphHeaderWidget(_nInputs);
@@ -104,6 +113,7 @@ void OrientationWindow::_ConstructUI()
 
 void OrientationWindow::InputTypeUpdated(bool rpySelected)
 {
+    emit logLine("3D: Mode change requested");
     if (rpySelected)
         _nInputs = 3;
     else
@@ -120,7 +130,6 @@ void OrientationWindow::InputTypeUpdated(bool rpySelected)
  */
 void OrientationWindow::ReceiveData(double *data, uint8_t n)
 {
-
     // Check if the largest index of input channels is available in the
     // received block of data
     if (n < _maxInChannel)
@@ -150,6 +159,7 @@ void OrientationWindow::ReceiveData(double *data, uint8_t n)
  */
 void OrientationWindow::UpdateInputChannels(uint8_t *inChannels)
 {
+    emit logLine("3D: Updating input channels");
    _inputChannels[0] = inChannels[0];
    _inputChannels[1] = inChannels[1];
    _inputChannels[2] = inChannels[2];

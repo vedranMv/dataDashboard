@@ -112,6 +112,11 @@ private:
     std::vector<uint8_t>_inputChannelMap;
 };
 
+/**
+ * @brief The MathChannel class
+ *      Helper class for storing and manipulating math channels
+ *      and their components
+ */
 class MathChannel
 {
 public:
@@ -144,7 +149,14 @@ public:
     std::vector< std::tuple<MathOperation,uint8_t> >_component;
 };
 
-
+/**
+ * @brief The DataMultiplexer class
+ *      Designed as singleton object with GetI and GetP methods for accessing
+ *      the static instance
+ *
+ *      Handles all the data coming in and out of the program, including all
+ *      the manipulation (math) and logging to file
+ */
 class DataMultiplexer : public QThread
 {
 

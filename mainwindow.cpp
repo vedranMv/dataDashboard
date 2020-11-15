@@ -32,7 +32,9 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    _pendingDeletion(false),
+    _loggingInitialized(false)
 {
     //  Setup UI made in designer
     ui->setupUi(this);
@@ -120,6 +122,8 @@ MainWindow::MainWindow(QWidget *parent) :
  */
 MainWindow::~MainWindow()
 {
+    logLine("Deleting main window");
+    _pendingDeletion = false;
     //  Save port options
     settings->setValue("port/name",
                        ui->portSelector->itemText(ui->portSelector->currentIndex()));
@@ -180,6 +184,7 @@ MainWindow::~MainWindow()
     mathComp.clear();
 
     //  Clean-up for program run log
+    _loggingInitialized = false;
     _logFile->close();
     delete _logFileStream;
     _logFile->deleteLater();
@@ -309,18 +314,16 @@ void MainWindow::toggleConnection()
  */
 void MainWindow::logLine(const QString &line)
 {
-    static bool initialized = false;
-
     QString time = QDateTime::currentDateTime().time().toString();
 
     //  Handle opening and rotating logs between the program launches. On
     //  every launch, increments the log descriptor and open new logfile to
     //  write to.
-    if (!initialized)
+    if (!_loggingInitialized && !_pendingDeletion)
     {
         //  Load logfile info
         uint8_t lastLogIndex = settings->value("appLog/index","0").toUInt();
-        const uint8_t maxLogIndex = settings->value("appLog/maxIndex","5").toUInt();
+        const uint8_t maxLogIndex = settings->value("appLog/maxIndex","3").toUInt();
 
         uint8_t currentLogIndex = (lastLogIndex + 1) % maxLogIndex;
         _logFile = new QFile("datadashboard_run"+QString::number(currentLogIndex)+".log");
@@ -333,13 +336,15 @@ void MainWindow::logLine(const QString &line)
 
         _logFileStream = new QTextStream(_logFile);
         settings->setValue("appLog/index", currentLogIndex);
-        initialized = true;
+        _loggingInitialized = true;
     }
 
-    ui->logLine->setText(time + ": " + line);
+    //  If UI has not been deleted, log to UI
+    if (!_pendingDeletion)
+        ui->logLine->setText(time + ": " + line);
 
     //  If log file is initialized, append a line in there as well
-    if (initialized)
+    if (_loggingInitialized)
         (*_logFileStream) <<  time + ": " + line << Qt::endl;
 }
 
@@ -356,12 +361,15 @@ void MainWindow::on_channelNumber_valueChanged(int arg1)
     settings->setValue("channel/numOfChannels", arg1);
     settings->sync();
 
+    logLine("Channel number changed to "\
+            +QString::number(arg1)+", reconstructing UI");
+
     //  Clear existing list of channels
     clearLayout(ui->channelList, true);
     //  Clear old list with channel elements
     ch.clear();
 
-    //  Loop through given number of channels
+    //  Reconstruct part of UI to offer requested number of channels
     for (uint8_t i = 0; i < arg1; i++)
     {
         QString chID_str =  QString::number(i);
@@ -411,12 +419,13 @@ void MainWindow::clearLayout(QLayout* layout, bool deleteWidgets)
 ///
 ///////////////////////////////////////////////////////////////////////////////
 /**
- * @brief Register a math channel with the given DI in the mux
+ * @brief Register a math channel with the given ID in the mux
  * @param chID channel Id to be registered
  */
 void MainWindow::RegisterMathChannel(uint8_t chID)
 {
     MathChannel *mc = new MathChannel();
+    logLine("Attempting to register math channel. Looking up components...");
 
     mc->SetLabel(mathChName[chID-1]->text());
     //  Look up all the components of this channel ID
@@ -429,6 +438,9 @@ void MainWindow::RegisterMathChannel(uint8_t chID)
         }
     }
 
+    logLine("Registering math channel "+QString::number(chID)+" with "\
+            +QString::number(mc->_component.size())+" components");
+
     mux->RegisterMathChannel(chID, mc);
 }
 
@@ -439,13 +451,19 @@ void MainWindow::on_addMathComp_clicked()
 {
     //  Convert current id to string for easier manipulation
     QString id_str = QString::number(mathComp.size());
-    //  Construct component for channel math and push it in the vector
+
+    logLine("Adding math component "+id_str);
+
+    //  Construct component for channel math and save it to global variable
     UIMathChannelComponent *tmp = new UIMathChannelComponent((uint8_t)mathComp.size());
     mathComp.push_back(tmp);
 
     //  Add new component to the UI
     ui->mathCompLayout->addLayout(tmp->GetLayout());
     //  Update available math channels in the component
+
+    logLine("Math component "+id_str+" added to UI");
+
     UpdateAvailMathCh();
     //  Set values from settings, if exist, otherwise load defaults
     tmp->SetInCh(settings->value("math/component"+id_str+"inCh","0").toInt());
@@ -455,6 +473,8 @@ void MainWindow::on_addMathComp_clicked()
     //  1 - Subtract
     connect(tmp, &UIMathChannelComponent::deleteRequested, \
             this, &MainWindow::on_delete_updateMathComp);
+
+    logLine("Saved math component "+id_str);
 }
 
 /**
@@ -473,6 +493,8 @@ void MainWindow::UpdateAvailMathCh()
     //  save mask into a config file
     static uint8_t  chMask = 0;
 
+    logLine("Updating available math channels in UI...");
+
     //  Loop through all QCheckBox elements and configure UI look based on
     //  whether they are checked or not
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
@@ -488,6 +510,7 @@ void MainWindow::UpdateAvailMathCh()
                 mathChName[i]->setText(
                             settings->value("math/channel"+id_str+"name",
                                             "Math "+id_str).toString());
+            logLine("Channel "+QString::number(i+1)+" enabled in UI");
         }
         else
             mathChName[i]->setEnabled(false);
@@ -495,7 +518,7 @@ void MainWindow::UpdateAvailMathCh()
         //  If it's enabled, but it wasn't in the last call
         if (mathChEnabled[i]->isChecked() && !(((1<<(i+1)) & chMask) > 0))
         {
-
+            logLine("Channel "+QString::number(i+1)+" has been enabled");
             chMask |= (1<<(i+1));
             RegisterMathChannel(i+1);
         }
@@ -504,7 +527,7 @@ void MainWindow::UpdateAvailMathCh()
         {
             chMask &= ~(1<<(i+1));
             mux->UnegisterMathChannel(i+1);
-            qDebug() << "Disabling channel " << (i+1) << QString::number(chMask);;
+            logLine("Channel "+QString::number(i+1)+" has been disabled");
         }
     }
 
@@ -527,7 +550,7 @@ void MainWindow::UpdateAvailMathCh()
 void MainWindow::on_delete_updateMathComp(uint8_t id)
 {
     //  Math component got destroyed
-
+    logLine("Requested to delete math channel "+QString::number(id));
     //  Find component in vector
     uint8_t i;
     for (i = 0; i < mathComp.size(); i++)
@@ -554,10 +577,11 @@ void MainWindow::on_delete_updateMathComp(uint8_t id)
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief Create new 3D orientation graph
+ * @brief [Slot] Create new 3D orientation graph
  */
 void MainWindow::on_add3D_clicked()
 {
+    logLine("UI: Creating 3D plot");
     static uint8_t _3DgraphCount = 0;
     QString winID = QString::number(_3DgraphCount);
 
@@ -576,10 +600,11 @@ void MainWindow::on_add3D_clicked()
 }
 
 /**
- * @brief Create new scatter graph
+ * @brief [Slot] Create new scatter graph
  */
 void MainWindow::on_addScatter_clicked()
 {
+    logLine("UI: Creating scatter plot");
     static uint8_t _ScatterCount = 0;
     QString winID = QString::number(_ScatterCount);
 
@@ -599,10 +624,11 @@ void MainWindow::on_addScatter_clicked()
 }
 
 /**
- * @brief Create new line plot
+ * @brief [Slot] Create new line plot
  */
 void MainWindow::on_addLine_clicked()
 {
+    logLine("UI: Creating line plot");
     static uint8_t _LineCount = 0;
     QString winID = QString::number(_LineCount);
 
@@ -624,12 +650,12 @@ void MainWindow::on_addLine_clicked()
 
 ///////////////////////////////////////////////////////////////////////////////
 ////
-///     Logging to file
+///     Logging channel data to file
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
- * @brief Open file dialog when 'Path' button has been click
+ * @brief [Slot] Open file dialog when 'Path' button has been click
  *      Once the path has been selected, update textbox in UI
  */
 void MainWindow::on_logfilePathDialog_clicked()
@@ -642,7 +668,7 @@ void MainWindow::on_logfilePathDialog_clicked()
 }
 
 /**
- * @brief Handle enabling/disabling logging to file
+ * @brief [Slot] Handle enabling/disabling logging to file
  *      Handles click events to the 'Enable' checkbox which toggles logging to
  *      the file. Updates UI and communicates with the MUX
  * @param arg1  State of the checkbox

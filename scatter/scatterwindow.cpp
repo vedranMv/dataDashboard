@@ -134,7 +134,7 @@ ScatterWindow::ScatterWindow()
  */
 ScatterWindow::~ScatterWindow()
 {
-    emit logLine("Destroying the scatter plot");
+    emit logLine("Scatter: Destroying the plot");
     DataMultiplexer::GetI().UnregisterGraph(this);
 
     QObject::disconnect(DataMultiplexer::GetP(),
@@ -159,6 +159,7 @@ ScatterWindow::~ScatterWindow()
  */
 void ScatterWindow::UpdateInputChannels(uint8_t *inChannels)
 {
+    emit logLine("Scatter: Updating input channels");
     _inputChannels[0] = inChannels[0];
     _inputChannels[1] = inChannels[1];
     _inputChannels[2] = inChannels[2];
@@ -225,6 +226,7 @@ void ScatterWindow::on_dataSize_changed(const QString &_datasize)
  */
 void ScatterWindow::on_resetData_pressed()
 {
+    emit logLine("Scatter: Data reset requested");
     _dataArray->clear();
     _dataArray->resize(dataSize);
     _graph->seriesList().at(0)->dataProxy()->resetArray(_dataArray);

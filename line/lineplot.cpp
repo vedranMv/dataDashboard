@@ -18,11 +18,16 @@ LinePlot::LinePlot():  _nInputs(1), _maxInChannel(0), _index(0)
     _plotDataMutex.release();
 }
 
+/**
+ * @brief Constructs UI based on configuration variables
+ *      Separated from the constructor to allow layout changes on runtime
+ */
 void LinePlot::_ConstructUI()
 {
     //  Check if UI is already been constructed, then destroy it
     if (!_contWind->layout()->isEmpty())
     {
+        emit logLine("Line: Deconstructing existing UI");
         _refresher->stop();
         DataMultiplexer::GetI().UnregisterGraph(this);
         disconnect(_refresher, SIGNAL(timeout()), _plot, SLOT(replot()));
@@ -32,6 +37,8 @@ void LinePlot::_ConstructUI()
                          &graphHeaderWidget::UpdateChannelDropdown);
         MainWindow::clearLayout(_contWind->layout());
     }
+
+    emit logLine("Line: Constructing new UI with "+QString::number(_nInputs)+" channels");
 
     //  Basic header with input channel drop-downs
     _header = new graphHeaderWidget(_nInputs);
@@ -102,7 +109,7 @@ void LinePlot::_ConstructUI()
     _index = 0;
     _inputChannels.resize(_nInputs);
 
-    //  General graph configuration, regardless of individual graphs
+    //  General graph configuration, common to all graphs
    _plot->axisRect()->setupFullAxesBox(true);
    _plot->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom);
    _plot->axisRect()->setRangeZoom(Qt::Vertical);
@@ -120,7 +127,6 @@ void LinePlot::_ConstructUI()
 
     //  Restart the timer for refreshing UI
     _refresher->start(20);
-    qDebug()<<"Updated size to: "<<_XaxisSize;
 
    //  Register with the mux
    DataMultiplexer::GetI().RegisterGraph(this->objectName(), _nInputs, this);
@@ -129,7 +135,7 @@ void LinePlot::_ConstructUI()
 
 LinePlot::~LinePlot()
 {
-    emit logLine("Destroying the line plot");
+    emit logLine("Line: Destroying the plot");
     DataMultiplexer::GetI().UnregisterGraph(this);
     //  Wait to get mutex before deleting the rest. Prevents rare crashes
     //  when closing the window
@@ -139,6 +145,7 @@ LinePlot::~LinePlot()
 
 void LinePlot::ChannelAdded()
 {
+    emit logLine("Line: Waiting for mutex to update channel count");
     _plotDataMutex.acquire();
 
     _nInputs++;
@@ -155,7 +162,8 @@ void LinePlot::ChannelAdded()
 void LinePlot::UpdateXaxis(const QString &_dataSize)
 {
     _plotDataMutex.acquire();
-qDebug()<<"Updated size to: "<<_XaxisSize;
+    emit logLine("Line: Updating x-axis size to: "+_dataSize);
+
     _XaxisSize = _dataSize.toUInt();
 
     //  Adjust plot range
@@ -178,17 +186,19 @@ qDebug()<<"Updated size to: "<<_XaxisSize;
     _plotDataMutex.release();
 }
 /**
- * @brief [Slot] Function that is called whenever input channel has been
+ * @brief [Slot] Function called whenever input channel has been
  *      changed in the drop-down fields of the header. It updates the channels
  *      used as data sources for the plot.
  * @param inChannels    Array of \ref _nInputs input channel indexes
  */
 void LinePlot::UpdateInputChannels(uint8_t *inChannels)
 {
-    //  TODO: implement error reporting
+
+    emit logLine("Line: Input channels");
+
     if (_header->GetLabels().size() != _nInputs)
     {
-        emit logLine("Line plot: inconsistency in received and required channels.");
+        emit logLine("Line: Inconsistency in received and required number of channels.");
         return;
     }
 

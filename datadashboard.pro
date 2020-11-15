@@ -34,6 +34,8 @@ SOURCES += main.cpp scatter/scatterwindow.cpp \
 
 HEADERS += scatter/scatterwindow.h \
     helperObjects/channel/channel.h \
+    helperObjects/dataMultiplexer/GraphClient.h \
+    helperObjects/dataMultiplexer/MathChannel.h \
     helperObjects/dataMultiplexer/datamultiplexer.h \
     helperObjects/graphHeaderWidget/graphheaderwidget.h \
     helperObjects/mathComponent/mathchannelcomponent.h \

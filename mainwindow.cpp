@@ -123,7 +123,7 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     logLine("Deleting main window");
-    _pendingDeletion = false;
+    _pendingDeletion = true;
     //  Save port options
     settings->setValue("port/name",
                        ui->portSelector->itemText(ui->portSelector->currentIndex()));

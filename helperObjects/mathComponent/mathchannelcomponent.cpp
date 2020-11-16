@@ -26,6 +26,10 @@ UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
     mathSelector = new QComboBox();
     mathSelector->addItem("Add");
     mathSelector->addItem("Subtract");
+    mathSelector->addItem("Multiply");
+    mathSelector->addItem("Add ABS");
+    mathSelector->addItem("Subtract ABS");
+    mathSelector->addItem("Multiply ABS");
 
     deleteButton = new QPushButton();
     deleteButton->setText("X");

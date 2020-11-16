@@ -474,8 +474,7 @@ void MainWindow::on_addMathComp_clicked()
     tmp->SetInCh(settings->value("math/component"+id_str+"inCh","0").toInt());
     tmp->SetMathCh(settings->value("math/component"+id_str+"mathCh","1").toInt());
     tmp->SetMath(settings->value("math/component"+id_str+"math","0").toInt());
-    //  0 - Add
-    //  1 - Subtract
+
     connect(tmp, &UIMathChannelComponent::deleteRequested, \
             this, &MainWindow::on_delete_updateMathComp);
 

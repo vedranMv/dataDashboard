@@ -321,10 +321,16 @@ void MainWindow::logLine(const QString &line)
 {
     QString time = QDateTime::currentDateTime().time().toString();
 
+    //  There's a chance this function is called after the UI has been deleted
+    //  Make sure we never try to access UI elements if MainWindow destructor
+    //  has been called.
+    if (_pendingDeletion)
+        return;
+
     //  Handle opening and rotating logs between the program launches. On
     //  every launch, increments the log descriptor and open new logfile to
     //  write to.
-    if (!_loggingInitialized && !_pendingDeletion)
+    if (!_loggingInitialized)
     {
         //  Load logfile info
         uint8_t lastLogIndex = settings->value("appLog/index","0").toUInt();
@@ -344,9 +350,7 @@ void MainWindow::logLine(const QString &line)
         _loggingInitialized = true;
     }
 
-    //  If UI has not been deleted, log to UI
-    if (!_pendingDeletion)
-        ui->logLine->setText(time + ": " + line);
+    ui->logLine->setText(time + ": " + line);
 
     //  If log file is initialized, append a line in there as well
     if (_loggingInitialized)

@@ -37,7 +37,6 @@ steps:
   - "/opt/qt5.11/amd64/bin/qmake -config release ../datadashboard.pro"
   - "make -j4"
   - "cqtdeployer -qmake /opt/qt5.11/amd64/bin/qmake -bin datadashboard"
-  - "cp /usr/lib/x86_64-linux-gnu/libpng12.so.0 DistributionKit/lib"
   - "cp ../LICENSE DistributionKit/LICENSE.txt"
   - "cp ../README.md DistributionKit/README.md"
   - "cp ../config.ini DistributionKit/config.ini"

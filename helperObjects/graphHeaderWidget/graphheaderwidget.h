@@ -20,6 +20,7 @@ public:
     void UpdateChannelDropdown();
 
     QVector<QLabel*>& GetLabels();
+    QVector<QString> GetChLabels();
 
 public slots:
 

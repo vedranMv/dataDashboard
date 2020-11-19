@@ -169,9 +169,9 @@ void ScatterWindow::UpdateInputChannels(uint8_t *inChannels)
         if (inChannels[i] > _maxInChannel)
             _maxInChannel = inChannels[i];
 
-    _graph->axisX()->setTitle(_header->GetLabels()[0]->text());
-    _graph->axisY()->setTitle(_header->GetLabels()[0]->text());
-    _graph->axisZ()->setTitle(_header->GetLabels()[0]->text());
+    _graph->axisX()->setTitle(_header->GetChLabels()[0]);
+    _graph->axisY()->setTitle(_header->GetChLabels()[1]);
+    _graph->axisZ()->setTitle(_header->GetChLabels()[2]);
 }
 
 /**

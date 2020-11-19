@@ -96,7 +96,21 @@ void graphHeaderWidget::UpdateChannelDropdown()
 QVector<QLabel*>& graphHeaderWidget::GetLabels()
 {
     return _inChLabel;
-};
+}
+
+/**
+ * @brief Returns array of selected channel names, as selected in combo boxes
+ * @return array of channel labels
+ */
+QVector<QString> graphHeaderWidget::GetChLabels()
+{
+    QVector<QString> retVal;
+
+    for (QComboBox* X : _inCh)
+        retVal.push_back(X->currentText());
+
+    return retVal;
+}
 
 /**
  * @brief Returns main header layout

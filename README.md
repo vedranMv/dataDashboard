@@ -15,14 +15,17 @@ It's currently a work in progress, but once completed it should to be able to:
 * Create dashboard consisting of any combination of the visualizations above on runtime
 
 ## Demo of current progress
-/doc folder contains some of the screen shoot and a demo video below
+``/doc`` folder contains few screenshoots, demonstrating the functionality
 
-https://vedran.ml/public/projects/datadashboard/demo.mp4
+Demo video: https://vedran.ml/public/projects/datadashboard/demo.mp4
 
 ## How to run
+
+There are several ways to run on both windows and linux.
+
 ### Windows
 
-* Download a portable (statically linked) precompiled version from [Releases](https://github.com/vedranMv/dataDashboard/releases)
+* Download a portable (statically linked) precompiled version from [Releases](https://github.com/vedranMv/dataDashboard/releases); _; or_
 * Download QT Creator and compile the source from this repo
 
 ### Linux
@@ -30,8 +33,8 @@ There are several dependencies for running on linux systems, regardless of which
 > ``sudo apt-get install libgl1-mesa-dev libfontconfig1 libxcb-randr0-dev libxcb-xtest0-dev libxcb-xinerama0-dev libxcb-shape0-dev libxcb-xkb-dev``
 
 After that, it's possible to:
-* (Ubuntu) Download a precompiled (dynamically linked), version from [Releases](https://github.com/vedranMv/) and launch ``datadashboard.sh``
-* Install QT creator and compile from scratch
+* (Ubuntu) Download a precompiled (dynamically linked), version from [Releases](https://github.com/vedranMv/) and launch ``datadashboard.sh``; _; or_
+* Install QT creator and compile from scratch _; or_
 * Compile the project yourself, following the guide below
 
 ### Compilation on linux

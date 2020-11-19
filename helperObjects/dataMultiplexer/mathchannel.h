@@ -15,7 +15,11 @@ enum SignalSource {
 
 enum MathOperation {
     Add_Signal,
-    Subtract_Signal
+    Subtract_Signal,
+    Multiply,
+    Add_Abs,
+    Subtract_Abs,
+    Multiply_Abs
 };
 
 

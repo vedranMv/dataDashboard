@@ -343,6 +343,18 @@ void DataMultiplexer::_ComputeMathChannels()
         else if (std::get<0>(_mChannel[i]->_component[j]) == MathOperation::Subtract_Signal)
                 _channelData[ _channelCount[SignalSource::SerialSignal] + i] -= \
                         _channelData[ std::get<1>(_mChannel[i]->_component[j]) ];
+        else if (std::get<0>(_mChannel[i]->_component[j]) == MathOperation::Multiply)
+                _channelData[ _channelCount[SignalSource::SerialSignal] + i] *= \
+                        abs(_channelData[ std::get<1>(_mChannel[i]->_component[j]) ]);
+        else if (std::get<0>(_mChannel[i]->_component[j]) == MathOperation::Add_Abs)
+                _channelData[ _channelCount[SignalSource::SerialSignal] + i] += \
+                        abs(_channelData[ std::get<1>(_mChannel[i]->_component[j]) ]);
+        else if (std::get<0>(_mChannel[i]->_component[j]) == MathOperation::Subtract_Abs)
+                _channelData[ _channelCount[SignalSource::SerialSignal] + i] -= \
+                        abs(_channelData[ std::get<1>(_mChannel[i]->_component[j]) ]);
+        else if (std::get<0>(_mChannel[i]->_component[j]) == MathOperation::Multiply_Abs)
+                _channelData[ _channelCount[SignalSource::SerialSignal] + i] *= \
+                        abs(_channelData[ std::get<1>(_mChannel[i]->_component[j]) ]);
     }
 }
 

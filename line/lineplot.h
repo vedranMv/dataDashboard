@@ -38,6 +38,7 @@ private:
 
     graphHeaderWidget *_header;
     QCheckBox *_autoAdjustYaxis;
+    QCheckBox *_accumulate;
 
     QVector < QVector<double> >_inputCh;
     QVector<double> _xAxis;

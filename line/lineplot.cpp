@@ -247,22 +247,10 @@ void LinePlot::ReceiveData(double *data, uint8_t n)
 
     for (uint8_t i = 0; i < _nInputs; i++)
     {
-//        //  Populate the graph
-//        if ((_index+1) != _XaxisSize)
-//        {
-//            //  If we have less then max number of data points, keep adding
-//            //  to the array from the back. Visually, graph comes into existence
-//            //  from right, then moving towards left
-//            _inputCh[i][_XaxisSize - 1 - _index] = data[_inputChannels[i]];
-//        }
-//        else
-//        {
-//            //  Once we have filled up data array, we keep popping out the
-//            //  oldest data point, and pushing in the new. Visually, the
-//            //  direction of movement as the graph above
-//            _inputCh[i].pop_front();
-//            _inputCh[i].push_back(data[_inputChannels[i]]);
-//        }
+        //  Populate the graph
+        //  Since graph has already been initialized, we keep popping out the
+        //  oldest data point, and pushing in the new. Visually, the direction
+        //  of movement as the graph above
         _inputCh[i].pop_front();
         _inputCh[i].push_back(data[_inputChannels[i]]);
 

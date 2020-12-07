@@ -24,9 +24,21 @@ LinePlot::LinePlot():  _nInputs(1), _maxInChannel(0), _index(0)
  */
 void LinePlot::_ConstructUI()
 {
+    //  Save old plot settings
+    QVector<uint8_t> selectedChannels;
+    bool autoRefresh = true;
+    double yMin = -1,
+           yMax = 1;
+
     //  Check if UI is already been constructed, then destroy it
     if (!_contWind->layout()->isEmpty())
     {
+        //  Loop to drop-downs and save selected channels
+        selectedChannels = _header->GetSelectedChannels();
+        autoRefresh = _autoAdjustYaxis->isChecked();
+        yMax = _plot->yAxis->range().upper;
+        yMin = _plot->yAxis->range().lower;
+
         emit logLine("Line: Deconstructing existing UI");
         _refresher->stop();
         DataMultiplexer::GetI().UnregisterGraph(this);
@@ -44,6 +56,8 @@ void LinePlot::_ConstructUI()
     _header = new graphHeaderWidget(_nInputs);
     windMainLayout->addLayout(_header->GetLayout());
 
+    //  Reselect the channels
+    _header->SetSelectedChannels(selectedChannels);
 
     //  Handle dynamic channel selection by drop-down
     QObject::connect(_header, &graphHeaderWidget::UpdateInputChannels,
@@ -68,7 +82,7 @@ void LinePlot::_ConstructUI()
     //  Checkbox to toggle automatic scaling on y-axis
     _autoAdjustYaxis = new QCheckBox();
     _autoAdjustYaxis->setText("Auto Y scale");
-    _autoAdjustYaxis->setChecked(true);
+    _autoAdjustYaxis->setChecked(autoRefresh);
     lineSpecificHeader->addWidget(_autoAdjustYaxis);
 
     //  Textbox to update the size of x-axis
@@ -115,7 +129,7 @@ void LinePlot::_ConstructUI()
    _plot->axisRect()->setRangeZoom(Qt::Vertical);
    _plot->axisRect()->setRangeDrag(Qt::Vertical);
    _plot->xAxis->setRange(-(double)_XaxisSize, 0);
-   _plot->yAxis->setRange(-1, 1);
+   _plot->yAxis->setRange(yMin, yMax);
 
    //   Populate X-axis values
    _xAxis.resize(_XaxisSize);

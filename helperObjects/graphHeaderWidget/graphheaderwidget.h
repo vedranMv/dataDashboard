@@ -21,6 +21,9 @@ public:
 
     QVector<QLabel*>& GetLabels();
     QVector<QString> GetChLabels();
+    QVector<uint8_t> GetSelectedChannels();
+
+    void SetSelectedChannels(QVector<uint8_t> &selectedCh);
 
 public slots:
 

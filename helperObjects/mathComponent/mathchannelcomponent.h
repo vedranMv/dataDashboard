@@ -10,6 +10,9 @@
 #include <QHBoxLayout>
 #include <QSpacerItem>
 
+//#include "mainwindow.h"
+#define _STYLE_TOOLTIP_(X) "<html><head/><body><p>" X "</p></body></html>"
+
 
 class UIMathChannelComponent :  public QObject
 {

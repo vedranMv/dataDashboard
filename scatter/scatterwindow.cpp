@@ -58,9 +58,18 @@ ScatterWindow::ScatterWindow()
     QVBoxLayout *windMainLayout = new QVBoxLayout(_contWind);
     this->setWidget(_contWind);
 
-
     _header = new graphHeaderWidget(3);
     windMainLayout->addLayout(_header->GetLayout());
+    //  Update channel labels
+    _header->GetLabels()[0]->setText("X-axis");
+    _header->SetChToolTip(0, \
+                    _STYLE_TOOLTIP_("Select X-axis of the scatter plot"));
+    _header->GetLabels()[1]->setText("Y-axis");
+    _header->SetChToolTip(1, \
+                    _STYLE_TOOLTIP_("Select Y-axis of the scatter plot"));
+    _header->GetLabels()[2]->setText("Z-axis");
+    _header->SetChToolTip(2, \
+                    _STYLE_TOOLTIP_("Select Z-axis of the scatter plot"));
 
     //  Header items for orientation plot
     QVBoxLayout *scatterSpecificHeader = new QVBoxLayout();
@@ -68,17 +77,21 @@ ScatterWindow::ScatterWindow()
     _header->AppendHorSpacer();
 
     //  Data size line edit
-    scatterSpecificHeader->addWidget(new QLabel("Data size (automatically updated)"));
+    scatterSpecificHeader->addWidget(new QLabel("Data size"));
     QLineEdit *dataSizeLE = new QLineEdit();
     dataSizeLE->setValidator( new QIntValidator(1, dataSize*10, this) );
-    dataSizeLE->setToolTip("Change the number of past data points kept in the graph");
+    dataSizeLE->setToolTip(_STYLE_TOOLTIP_("Number of past data points "
+                            "kept in the graph (automatically updated)"));
     dataSizeLE->setText(QString::number(dataSize));
+
     QObject::connect(dataSizeLE, &QLineEdit::textChanged,
                      this, &ScatterWindow::on_dataSize_changed);
     scatterSpecificHeader->addWidget(dataSizeLE);
     //  Reset data set push button
     QPushButton *resetView = new QPushButton();
-    resetView->setText("Reset data");
+    resetView->setText("Clear data");
+    resetView->setToolTip(_STYLE_TOOLTIP_("Press to clear all data from the"
+                                          " scatter plot"));
     QObject::connect(resetView, &QPushButton::pressed,
                      this, &ScatterWindow::on_resetData_pressed);
     scatterSpecificHeader->addWidget(resetView);

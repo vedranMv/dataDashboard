@@ -70,11 +70,13 @@ void LinePlot::_ConstructUI()
                      &DataMultiplexer::ChannelsUpdated,
                      _header,
                      &graphHeaderWidget::UpdateChannelDropdown);
+
     //  Line to separate channels from config
     QFrame *_vertLine = new QFrame();
     _vertLine->setFrameShape(QFrame::VLine);
     _vertLine->setFrameShadow(QFrame::Sunken);
     _header->GetLayout()->addWidget(_vertLine);
+
     //  Extra parts of header, specific to Line plot
     QVBoxLayout *lineSpecificHeader = new QVBoxLayout();
     _header->GetLayout()->addLayout(lineSpecificHeader);
@@ -82,7 +84,8 @@ void LinePlot::_ConstructUI()
 
     //  'Add plot' button and add it to the layout
     QPushButton *addPlot = new QPushButton();
-    addPlot->setText("Add plot");
+    addPlot->setText("Add channel");
+    addPlot->setToolTip(_STYLE_TOOLTIP_("Add new channel to the plot"));
     addPlot->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     connect(addPlot, SIGNAL(pressed()), this, SLOT(ChannelAdded()));
     lineSpecificHeader->addWidget(addPlot);
@@ -92,6 +95,7 @@ void LinePlot::_ConstructUI()
     _autoAdjustYaxis = new QCheckBox();
     _autoAdjustYaxis->setText("Auto Y scale");
     _autoAdjustYaxis->setChecked(autoRefresh);
+    _autoAdjustYaxis->setToolTip(_STYLE_TOOLTIP_("When checked, Y-range is automatically enlarged to fit all data"));
     plotOptions->addWidget(_autoAdjustYaxis);
 
     _accumulate = new QCheckBox();
@@ -105,7 +109,7 @@ void LinePlot::_ConstructUI()
     //  Textbox to update the size of x-axis
     QLineEdit *xAxisSize = new QLineEdit();
     xAxisSize->setValidator( new QIntValidator(10, 5000, this) );
-    xAxisSize->setToolTip("Change the length of X axis: Number of past samples used to plot the curve with");
+    xAxisSize->setToolTip(_STYLE_TOOLTIP_("Change the length of X axis: Number of past samples used to plot the curve with"));
     xAxisSize->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     xAxisSize->setText( QString::number(_XaxisSize) );
     connect(xAxisSize, &QLineEdit::textChanged, this, &LinePlot::UpdateXaxis);

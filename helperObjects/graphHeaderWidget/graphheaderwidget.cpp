@@ -39,11 +39,18 @@ graphHeaderWidget::graphHeaderWidget(uint8_t chnnelNum)
     {
         _inChLabel.push_back(new QLabel());
         _inChLabel.back()->setText("Channel "+QString::number(i));
+        _inChLabel.back()->setToolTip( _STYLE_TOOLTIP_(\
+                    "Select which input channel should be used as channel " \
+                    + QString::number(i) + " in the plot"));
+        _inChLabel.back()->setFixedHeight(22);
 
         _inCh.push_back(new QComboBox());
         //  Set fixed height for nicer look
         _inCh.back()->setFixedHeight(22);
-        _inChLabel.back()->setFixedHeight(22);
+        _inCh.back()->setToolTip( _STYLE_TOOLTIP_(\
+                    "Select which input channel should be used as channel " \
+                    + QString::number(i) + " in the plot"));
+
         //  Trigger 'ComboBoxUpdated' function here whenever the combo-boxes
         //  get updated
         QObject::connect(_inCh[i],
@@ -142,6 +149,19 @@ void graphHeaderWidget::SetSelectedChannels(QVector<uint8_t> &selectedCh)
                 _inCh[i]->setCurrentIndex(selectedCh[i]);
 }
 
+/**
+ * @brief Update tooltip of a selected channel
+ * @param id Channel ID to be updated
+ * @param toolTip String to use as tooltip
+ */
+void graphHeaderWidget::SetChToolTip(uint8_t id, QString toolTip)
+{
+    //  Check if Id is valid
+    if ((id >= _inCh.size()) || (id >= _inChLabel.size()))
+        return;
+    _inChLabel[id]->setToolTip( _STYLE_TOOLTIP_(+toolTip+));
+    _inCh[id]->setToolTip( _STYLE_TOOLTIP_(+toolTip+));
+}
 /**
  * @brief Returns main header layout
  * @return main header layout

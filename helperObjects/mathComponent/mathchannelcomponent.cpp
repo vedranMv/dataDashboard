@@ -1,5 +1,7 @@
 #include "mathchannelcomponent.h"
-#include <QDebug>
+
+#define _STYLE_TOOLTIP_(X) "<html><head/><body><p>" X "</p></body></html>"
+
 
 UIMathChannelComponent::~UIMathChannelComponent()
 {
@@ -16,20 +18,24 @@ UIMathChannelComponent::~UIMathChannelComponent()
 
 UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
 {
-    labels[0] = new QLabel("Input channel");
-    labels[1] = new QLabel("Math channel");
-    labels[2] = new QLabel("Math");
+    QLabel *labels[4];
+    QSpacerItem *horSpacer;
+
+    labels[0] = new QLabel("Math channel");
+    labels[1] = new QLabel("+= ");
+    labels[2] = new QLabel("(Input channel");
+    labels[3] = new QLabel(")");
 
     mathChSelector = new QComboBox();
     inChSelector = new QSpinBox();
 
     mathSelector = new QComboBox();
-    mathSelector->addItem("Add");
-    mathSelector->addItem("Subtract");
-    mathSelector->addItem("Multiply");
-    mathSelector->addItem("Add ABS");
-    mathSelector->addItem("Subtract ABS");
-    mathSelector->addItem("Multiply ABS");
+    mathSelector->addItem("+");
+    mathSelector->addItem("-");
+    mathSelector->addItem("*");
+    mathSelector->addItem("+ ABS");
+    mathSelector->addItem(" - ABS");
+    mathSelector->addItem("* ABS");
 
     deleteButton = new QPushButton();
     deleteButton->setText("X");
@@ -42,18 +48,35 @@ UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
 
     //  Construct layout with all the elements
     layout->addWidget(labels[0], 0, Qt::AlignLeft);
-    layout->addWidget(inChSelector, 0, Qt::AlignLeft);
-    layout->addWidget(labels[1], 0, Qt::AlignLeft);
     layout->addWidget(mathChSelector, 0, Qt::AlignLeft);
-    layout->addWidget(labels[2], 0, Qt::AlignLeft);
+    layout->addWidget(labels[1], 0, Qt::AlignLeft);
     layout->addWidget(mathSelector, 0, Qt::AlignLeft);
+    layout->addWidget(labels[2], 0, Qt::AlignLeft);
+    layout->addWidget(inChSelector, 0, Qt::AlignLeft);
+    layout->addWidget(labels[3], 0, Qt::AlignLeft);
+
     layout->addSpacerItem(horSpacer);
     layout->addWidget(deleteButton, 0, Qt::AlignLeft);
+
+    labels[0]->setToolTip(_STYLE_TOOLTIP_("Select input channel to be used "
+                                          "in math operation"));
+    inChSelector->setToolTip(_STYLE_TOOLTIP_("Select input channel to be used "
+                                             "in math operation"));
+    labels[1]->setToolTip(_STYLE_TOOLTIP_("Select math channel that the "
+                                          "operation should be a component of"));
+    mathChSelector->setToolTip(_STYLE_TOOLTIP_("Select math channel that the "
+                                               "operation should be a component of"));
+    labels[2]->setToolTip(_STYLE_TOOLTIP_("Select arithmetic operation to be "
+                                          "performed on the input channel "));
+    mathSelector->setToolTip(_STYLE_TOOLTIP_("Select arithmetic operation to be "
+                                             "performed on the input channel "));
+    deleteButton->setToolTip(_STYLE_TOOLTIP_("Delete math component"));
 
     for (int i = 0; i < 6; i++)
         mathChSelector->addItem(QString::number(i+1));
 
-    QObject::connect(deleteButton, &QPushButton::pressed, this, &UIMathChannelComponent::deleteComponent);
+    QObject::connect(deleteButton, &QPushButton::pressed,
+                     this, &UIMathChannelComponent::deleteComponent);
 }
 
 void UIMathChannelComponent::UpdateMathCh(int *mathCh, int size)

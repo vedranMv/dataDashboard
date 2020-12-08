@@ -21,6 +21,10 @@ public:
 
     QVector<QLabel*>& GetLabels();
     QVector<QString> GetChLabels();
+    QVector<uint8_t> GetSelectedChannels();
+
+    void SetSelectedChannels(QVector<uint8_t> &selectedCh);
+    void SetChToolTip(uint8_t id, QString toolTip);
 
 public slots:
 

@@ -49,6 +49,12 @@ void OrientationWindow::_ConstructUI()
     _header = new graphHeaderWidget(_nInputs);
     windMainLayout->addLayout(_header->GetLayout());
 
+    //  Line to separate channels from config
+    QFrame *_vertLine = new QFrame();
+    _vertLine->setFrameShape(QFrame::VLine);
+    _vertLine->setFrameShadow(QFrame::Sunken);
+    _header->GetLayout()->addWidget(_vertLine);
+
     //  Header items for orientation plot
     QVBoxLayout *orientationSpecificHeader  = new QVBoxLayout();
     _header->GetLayout()->addLayout(orientationSpecificHeader);
@@ -56,9 +62,13 @@ void OrientationWindow::_ConstructUI()
 
     QRadioButton *rpyInput = new QRadioButton();
     rpyInput->setText("Euler (RPY)");
+    rpyInput->setToolTip(_STYLE_TOOLTIP_(\
+                    "Orientation is supplied as Euler angles in degrees"));
 
     QRadioButton *quatInput = new QRadioButton();
     quatInput->setText("Quaternion (w,x,y,z)");
+    quatInput->setToolTip(_STYLE_TOOLTIP_(\
+                    "Orientation is supplied as a normalized quaternion"));
 
     if (_nInputs == 3)
         rpyInput->setChecked(true);
@@ -96,15 +106,22 @@ void OrientationWindow::_ConstructUI()
     if (_nInputs == 3)
     {
         _header->GetLabels()[0]->setText("Roll");
+        _header->SetChToolTip(0, _STYLE_TOOLTIP_("Cube roll"));
         _header->GetLabels()[1]->setText("Pitch");
+        _header->SetChToolTip(1, _STYLE_TOOLTIP_("Cube pitch"));
         _header->GetLabels()[2]->setText("Yaw");
+        _header->SetChToolTip(2, _STYLE_TOOLTIP_("Cube yaw"));
     }
     else if (_nInputs == 4)
     {
         _header->GetLabels()[0]->setText("w");
+        _header->SetChToolTip(0, _STYLE_TOOLTIP_("Quaternion w component"));
         _header->GetLabels()[1]->setText("x");
+        _header->SetChToolTip(1, _STYLE_TOOLTIP_("Quaternion x component"));
         _header->GetLabels()[2]->setText("y");
+        _header->SetChToolTip(2, _STYLE_TOOLTIP_("Quaternion y component"));
         _header->GetLabels()[3]->setText("z");
+        _header->SetChToolTip(3, _STYLE_TOOLTIP_("Quaternion z component"));
     }
 
     //  Register with the mux

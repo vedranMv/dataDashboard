@@ -114,6 +114,9 @@ MainWindow::MainWindow(QWidget *parent) :
     mainTimer->start();
 
     dataAdapter->RegisterMux(mux);
+
+    //  TODO: Enable when used
+    ui->networkGroup->setVisible(false);
 }
 
 /**

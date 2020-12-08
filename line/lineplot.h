@@ -23,8 +23,13 @@ public slots:
     void ChannelAdded();
     void UpdateXaxis(const QString &_datasize);
 
+private slots:
+    void _toggleAccumulatedMode(bool state);
+
 private:
     void _ConstructUI();
+
+
     uint8_t _nInputs;
     QSemaphore _plotDataMutex;
 
@@ -34,10 +39,10 @@ private:
 
     QVector<uint8_t>_inputChannels;
     uint8_t _maxInChannel;
-    uint32_t _index;
 
     graphHeaderWidget *_header;
     QCheckBox *_autoAdjustYaxis;
+    QCheckBox *_accumulate;
 
     QVector < QVector<double> >_inputCh;
     QVector<double> _xAxis;

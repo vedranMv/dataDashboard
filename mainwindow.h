@@ -13,6 +13,8 @@
 #include <QCheckBox>
 #include <QSettings>
 
+#define _STYLE_TOOLTIP_(X) "<html><head/><body><p>" X "</p></body></html>"
+
 namespace Ui {
 class MainWindow;
 }

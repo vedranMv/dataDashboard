@@ -49,6 +49,12 @@ void OrientationWindow::_ConstructUI()
     _header = new graphHeaderWidget(_nInputs);
     windMainLayout->addLayout(_header->GetLayout());
 
+    //  Line to separate channels from config
+    QFrame *_vertLine = new QFrame();
+    _vertLine->setFrameShape(QFrame::VLine);
+    _vertLine->setFrameShadow(QFrame::Sunken);
+    _header->GetLayout()->addWidget(_vertLine);
+
     //  Header items for orientation plot
     QVBoxLayout *orientationSpecificHeader  = new QVBoxLayout();
     _header->GetLayout()->addLayout(orientationSpecificHeader);

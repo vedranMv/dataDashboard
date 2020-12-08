@@ -20,7 +20,7 @@
       <enum>QTabWidget::West</enum>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
      <property name="movable">
       <bool>false</bool>
@@ -759,7 +759,7 @@
          <item>
           <widget class="QLabel" name="label_11">
            <property name="text">
-            <string>Create new data channels by performing basic math on existing channels</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Create new data channels by performing basic math on input channels&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
@@ -908,7 +908,7 @@
            <item>
             <widget class="QPushButton" name="addMathComp">
              <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add new math component&lt;/p&gt;&lt;p&gt;Components stack up to to create an expression associated with the math channel (e.g. math=+abs(ch1)*ch2 would correspond to adding component +abs with input channel 1, and )&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Add new math component&lt;/p&gt;&lt;p&gt;Components stack up to to create an expression associated with the math channel (e.g. math=+abs(ch1)*ch2 would correspond to adding component '+abs' with input channel 1, and '*' with channel 2)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="text">
               <string>Add component</string>
@@ -1044,7 +1044,7 @@
      <item>
       <widget class="QPushButton" name="connectButton">
        <property name="toolTip">
-        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open serial port&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Open/close serial port&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="text">
         <string>Connect</string>

@@ -1,5 +1,7 @@
 #include "mathchannelcomponent.h"
-#include <QDebug>
+
+#define _STYLE_TOOLTIP_(X) "<html><head/><body><p>" X "</p></body></html>"
+
 
 UIMathChannelComponent::~UIMathChannelComponent()
 {
@@ -16,10 +18,13 @@ UIMathChannelComponent::~UIMathChannelComponent()
 
 UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
 {
-    labels[0] = new QLabel("(Input channel");
-    labels[1] = new QLabel("Math channel");
-    labels[2] = new QLabel("+= ");
-    QLabel *ending = new QLabel(")");
+    QLabel *labels[4];
+    QSpacerItem *horSpacer;
+
+    labels[0] = new QLabel("Math channel");
+    labels[1] = new QLabel("+= ");
+    labels[2] = new QLabel("(Input channel");
+    labels[3] = new QLabel(")");
 
     mathChSelector = new QComboBox();
     inChSelector = new QSpinBox();
@@ -29,7 +34,7 @@ UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
     mathSelector->addItem("-");
     mathSelector->addItem("*");
     mathSelector->addItem("+ ABS");
-    mathSelector->addItem("- ABS");
+    mathSelector->addItem(" - ABS");
     mathSelector->addItem("* ABS");
 
     deleteButton = new QPushButton();
@@ -42,13 +47,13 @@ UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
     horSpacer = new QSpacerItem (20,20,QSizePolicy::Expanding);
 
     //  Construct layout with all the elements
-    layout->addWidget(labels[1], 0, Qt::AlignLeft);
-    layout->addWidget(mathChSelector, 0, Qt::AlignLeft);
-    layout->addWidget(labels[2], 0, Qt::AlignLeft);
-    layout->addWidget(mathSelector, 0, Qt::AlignLeft);
     layout->addWidget(labels[0], 0, Qt::AlignLeft);
+    layout->addWidget(mathChSelector, 0, Qt::AlignLeft);
+    layout->addWidget(labels[1], 0, Qt::AlignLeft);
+    layout->addWidget(mathSelector, 0, Qt::AlignLeft);
+    layout->addWidget(labels[2], 0, Qt::AlignLeft);
     layout->addWidget(inChSelector, 0, Qt::AlignLeft);
-    layout->addWidget(ending, 0, Qt::AlignLeft);
+    layout->addWidget(labels[3], 0, Qt::AlignLeft);
 
     layout->addSpacerItem(horSpacer);
     layout->addWidget(deleteButton, 0, Qt::AlignLeft);

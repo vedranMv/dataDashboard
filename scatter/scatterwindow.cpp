@@ -71,6 +71,12 @@ ScatterWindow::ScatterWindow()
     _header->SetChToolTip(2, \
                     _STYLE_TOOLTIP_("Select Z-axis of the scatter plot"));
 
+    //  Line to separate channels from config
+    QFrame *_vertLine = new QFrame();
+    _vertLine->setFrameShape(QFrame::VLine);
+    _vertLine->setFrameShadow(QFrame::Sunken);
+    _header->GetLayout()->addWidget(_vertLine);
+
     //  Header items for orientation plot
     QVBoxLayout *scatterSpecificHeader = new QVBoxLayout();
     _header->GetLayout()->addLayout(scatterSpecificHeader);

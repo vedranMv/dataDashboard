@@ -16,20 +16,21 @@ UIMathChannelComponent::~UIMathChannelComponent()
 
 UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
 {
-    labels[0] = new QLabel("Input channel");
+    labels[0] = new QLabel("(Input channel");
     labels[1] = new QLabel("Math channel");
-    labels[2] = new QLabel("Math");
+    labels[2] = new QLabel("+= ");
+    QLabel *ending = new QLabel(")");
 
     mathChSelector = new QComboBox();
     inChSelector = new QSpinBox();
 
     mathSelector = new QComboBox();
-    mathSelector->addItem("Add");
-    mathSelector->addItem("Subtract");
-    mathSelector->addItem("Multiply");
-    mathSelector->addItem("Add ABS");
-    mathSelector->addItem("Subtract ABS");
-    mathSelector->addItem("Multiply ABS");
+    mathSelector->addItem("+");
+    mathSelector->addItem("-");
+    mathSelector->addItem("*");
+    mathSelector->addItem("+ ABS");
+    mathSelector->addItem("- ABS");
+    mathSelector->addItem("* ABS");
 
     deleteButton = new QPushButton();
     deleteButton->setText("X");
@@ -41,12 +42,14 @@ UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
     horSpacer = new QSpacerItem (20,20,QSizePolicy::Expanding);
 
     //  Construct layout with all the elements
-    layout->addWidget(labels[0], 0, Qt::AlignLeft);
-    layout->addWidget(inChSelector, 0, Qt::AlignLeft);
     layout->addWidget(labels[1], 0, Qt::AlignLeft);
     layout->addWidget(mathChSelector, 0, Qt::AlignLeft);
     layout->addWidget(labels[2], 0, Qt::AlignLeft);
     layout->addWidget(mathSelector, 0, Qt::AlignLeft);
+    layout->addWidget(labels[0], 0, Qt::AlignLeft);
+    layout->addWidget(inChSelector, 0, Qt::AlignLeft);
+    layout->addWidget(ending, 0, Qt::AlignLeft);
+
     layout->addSpacerItem(horSpacer);
     layout->addWidget(deleteButton, 0, Qt::AlignLeft);
 

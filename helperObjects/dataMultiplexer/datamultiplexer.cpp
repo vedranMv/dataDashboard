@@ -345,7 +345,7 @@ void DataMultiplexer::_ComputeMathChannels()
                         _channelData[ std::get<1>(_mChannel[i]->_component[j]) ];
         else if (std::get<0>(_mChannel[i]->_component[j]) == MathOperation::Multiply)
                 _channelData[ _channelCount[SignalSource::SerialSignal] + i] *= \
-                        abs(_channelData[ std::get<1>(_mChannel[i]->_component[j]) ]);
+                        _channelData[ std::get<1>(_mChannel[i]->_component[j]) ];
         else if (std::get<0>(_mChannel[i]->_component[j]) == MathOperation::Add_Abs)
                 _channelData[ _channelCount[SignalSource::SerialSignal] + i] += \
                         abs(_channelData[ std::get<1>(_mChannel[i]->_component[j]) ]);

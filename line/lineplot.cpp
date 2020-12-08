@@ -4,7 +4,7 @@
 
 
 uint32_t _XaxisSize = 500;
-LinePlot::LinePlot():  _nInputs(1), _maxInChannel(0), _index(0)
+LinePlot::LinePlot():  _nInputs(1), _maxInChannel(0)
 {
      //  Create container window
     _contWind = new QWidget();
@@ -95,13 +95,18 @@ void LinePlot::_ConstructUI()
     _autoAdjustYaxis = new QCheckBox();
     _autoAdjustYaxis->setText("Auto Y scale");
     _autoAdjustYaxis->setChecked(autoRefresh);
-    _autoAdjustYaxis->setToolTip(_STYLE_TOOLTIP_("When checked, Y-range is automatically enlarged to fit all data"));
+    _autoAdjustYaxis->setToolTip(_STYLE_TOOLTIP_("When checked, Y-range is "
+                     "automatically enlarged to fit all data"));
     plotOptions->addWidget(_autoAdjustYaxis);
 
     _accumulate = new QCheckBox();
-    _accumulate->setText("Accumulate data");
+    _accumulate->setText("Accumulate data(!)");
+    _accumulate->setToolTip(_STYLE_TOOLTIP_("Experimental feature! It will "
+        "accumulate data for as long as there's available memory. There's "
+        "no checks for available memory so it has a potential to crash the program."));
     _accumulate->setChecked(accumulate);
-    _accumulate->setVisible(false);
+    _accumulate->setVisible(true);
+    connect(_accumulate, &QCheckBox::toggled, this, &LinePlot::_toggleAccumulatedMode);
     // TODO: Implement accumulated data logging
     plotOptions->addWidget(_accumulate);
 
@@ -110,7 +115,8 @@ void LinePlot::_ConstructUI()
     //  Textbox to update the size of x-axis
     QLineEdit *xAxisSize = new QLineEdit();
     xAxisSize->setValidator( new QIntValidator(10, 5000, this) );
-    xAxisSize->setToolTip(_STYLE_TOOLTIP_("Change the length of X axis: Number of past samples used to plot the curve with"));
+    xAxisSize->setToolTip(_STYLE_TOOLTIP_("Change the length of X axis: Number"
+              " of past samples used to plot the curve with. Limited to 5000 samples"));
     xAxisSize->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
     xAxisSize->setText( QString::number(_XaxisSize) );
     connect(xAxisSize, &QLineEdit::textChanged, this, &LinePlot::UpdateXaxis);
@@ -143,7 +149,7 @@ void LinePlot::_ConstructUI()
 
         _inputCh[i].resize(_XaxisSize);
     }
-    _index = 0;
+
     _inputChannels.resize(_nInputs);
 
     //  General graph configuration, common to all graphs
@@ -180,6 +186,11 @@ LinePlot::~LinePlot()
     _plotDataMutex.release();
 }
 
+/**
+ * @brief [Slot] Called when "Add channel" has been pressed
+ *  Handles reconstructing the UI to add another data channel onto
+ *  the line plot
+ */
 void LinePlot::ChannelAdded()
 {
     emit logLine("Line: Waiting for mutex to update channel count");
@@ -189,6 +200,39 @@ void LinePlot::ChannelAdded()
     _ConstructUI();
 
     _plotDataMutex.release();
+    emit logLine("Line: Finished updating channel count");
+}
+
+/**
+ * @brief [Slot] Called when 'Accumulated' checkbox has been toggled
+ *  Handles switching between data-accumulation and normal mode
+ * @param state True if data-accumulation has been enabled in UI
+ */
+void LinePlot::_toggleAccumulatedMode(bool state)
+{
+
+    if (state)
+    {
+        //  Data-accumulation mode
+        _xAxis.resize(1);
+        _xAxis[0] = 0;
+
+        for (uint8_t i = 0; i < _nInputs; i++)
+            _inputCh[i].resize(1);
+    }
+    else
+    {
+        //  Normal mode
+        //   Populate X-axis values
+        _xAxis.resize(_XaxisSize);
+        for (uint32_t i = 0; i < _XaxisSize; i++)
+            _xAxis[i] = (double)i - (double)_XaxisSize;
+        //  Limit plot to the actual size of X-axis
+        _plot->xAxis->setRange(-(double)_XaxisSize, 0);
+        //  Clean up channel data arrays
+        for (uint8_t i = 0; i < _nInputs; i++)
+            _inputCh[i].resize(_XaxisSize);
+    }
 }
 
 /**
@@ -217,8 +261,6 @@ void LinePlot::UpdateXaxis(const QString &_dataSize)
         _inputCh[i].clear();
         _inputCh[i].resize(_XaxisSize);
     }
-    //  Reset current index of input arrays
-    _index = 0;
 
     _plotDataMutex.release();
 }
@@ -282,13 +324,24 @@ void LinePlot::ReceiveData(double *data, uint8_t n)
     if (!_plotDataMutex.tryAcquire(1,1))
         return;
 
+    //  If data accumulation is enabled, resize X axis as we gather the
+    //  samples. When we hit the end of current range, increase range by 20%
+    if (_accumulate->isChecked())
+    {
+        _xAxis.push_front(_xAxis.front()-1);
+        if (_xAxis.front() < _plot->xAxis->range().lower)
+            _plot->xAxis->setRange(_xAxis.front()*1.2, 0);
+    }
+
     for (uint8_t i = 0; i < _nInputs; i++)
     {
         //  Populate the graph
         //  Since graph has already been initialized, we keep popping out the
         //  oldest data point, and pushing in the new. Visually, the direction
         //  of movement as the graph above
-        _inputCh[i].pop_front();
+        if (!_accumulate->isChecked())
+            //  When not accumulating, pop the oldest data to make space for new
+            _inputCh[i].pop_front();
         _inputCh[i].push_back(data[_inputChannels[i]]);
 
         //  Connect updated data source to graph
@@ -298,6 +351,8 @@ void LinePlot::ReceiveData(double *data, uint8_t n)
         if (data[_inputChannels[i]] > maxYVal) maxYVal = data[_inputChannels[i]];
         if (data[_inputChannels[i]] < minYVal) minYVal = data[_inputChannels[i]];
     }
+
+
 
     //  If enabled, automatically adjust range to 10% more than max value, and
     //  10% less then min value
@@ -310,8 +365,4 @@ void LinePlot::ReceiveData(double *data, uint8_t n)
     }
 
     _plotDataMutex.release();
-
-    // Increment data index and enforce the boundary
-    if ((_index+1) != _XaxisSize)
-        _index = (_index+1) % _XaxisSize;
 }

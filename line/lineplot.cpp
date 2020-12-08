@@ -101,6 +101,7 @@ void LinePlot::_ConstructUI()
     _accumulate = new QCheckBox();
     _accumulate->setText("Accumulate data");
     _accumulate->setChecked(accumulate);
+    _accumulate->setVisible(false);
     // TODO: Implement accumulated data logging
     plotOptions->addWidget(_accumulate);
 

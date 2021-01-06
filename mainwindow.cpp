@@ -55,12 +55,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //  Initialize objects
     dataAdapter = new SerialAdapter();
+    netAdapter = new NetworkAdapter();
     mainTimer = new QTimer();
     mux = DataMultiplexer::GetP();
     settings = new QSettings(QString("config.ini"), QSettings::IniFormat);
 
-    //void response(const QString &s);
-    connect(dataAdapter, &SerialAdapter::response, mux, &DataMultiplexer::ReceiveSerialData);
     connect(mux, &DataMultiplexer::logLine, this, &MainWindow::logLine);
     logLine("Starting up..");
 
@@ -96,6 +95,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //  Serial adapter objects logs data into a MainWindow logger
     QObject::connect(dataAdapter, &SerialAdapter::logLine,
                      this, &MainWindow::logLine);
+    //  Serial adapter objects logs data into a MainWindow logger
+    QObject::connect(netAdapter, &NetworkAdapter::logLine,
+                     this, &MainWindow::logLine);
 
     //  Connect channel enable signals to slot
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
@@ -114,9 +116,7 @@ MainWindow::MainWindow(QWidget *parent) :
     mainTimer->start();
 
     dataAdapter->RegisterMux(mux);
-
-    //  TODO: Enable when used
-    ui->networkGroup->setVisible(false);
+    netAdapter->RegisterMux(mux);
 }
 
 /**
@@ -132,6 +132,7 @@ MainWindow::~MainWindow()
                        ui->portSelector->itemText(ui->portSelector->currentIndex()));
     settings->setValue("port/baud",
                        ui->portBaud->itemText(ui->portBaud->currentIndex()));
+    settings->setValue("port/enabled",ui->enableNetwork->isChecked());
 
     settings->setValue("channel/startChar", ui->frameStartCh->text());
     settings->setValue("channel/separator", ui->frameChSeparator->text());
@@ -177,6 +178,11 @@ MainWindow::~MainWindow()
 
     //  Save currently open page
     settings->setValue("ui/startPage", ui->tabWidget->currentIndex());
+
+    //  Save network input settings
+    settings->setValue("network/port",ui->netportSelector->value());
+    settings->setValue("network/enabled",ui->enableNetwork->isChecked());
+
 
     settings->sync();
 
@@ -245,6 +251,9 @@ void MainWindow::LoadSettings()
 
     //  Restore last opened tab
     ui->tabWidget->setCurrentIndex(settings->value("ui/startPage","0").toUInt());
+
+    //  Load settings for network connection
+    ui->netportSelector->setValue(settings->value("network/port","5555").toUInt());
 }
 
 /**
@@ -294,24 +303,45 @@ void MainWindow::toggleConnection()
         //  Clean up before exit
         delete[] chLabels;
 
-        //  Configure serial port
-        dataAdapter->updatePort(ui->portSelector->itemText(
-                                    ui->portSelector->currentIndex()), \
-                                ui->portBaud->itemText(ui->portBaud->currentIndex()));
-        //  Prevent edits to serial port while connection is open
-        ui->serialGroup->setEnabled(false);
+        if (ui->enableSerial->isChecked())
+        {
+            //  Configure serial port
+            dataAdapter->updatePort(ui->portSelector->itemText(
+                                        ui->portSelector->currentIndex()), \
+                                    ui->portBaud->itemText(ui->portBaud->currentIndex()));
+            //  Prevent edits to serial port while connection is open
+            ui->serialGroup->setEnabled(false);
+
+            dataAdapter->startThread();
+            //TODO: How to handle a case where function is called, but results in an error?
+        }
+
+        if (ui->enableNetwork->isChecked())
+        {
+            //  TODO: Input validation on port!
+            netAdapter->SetNetPort(ui->netportSelector->value());
+            ui->networkGroup->setEnabled(false);
+
+            netAdapter->StartListening();
+        }
         //  Rename the button
         ui->connectButton->setText("Disconnect");
-
-        dataAdapter->startThread();
-        //TODO: How to handle a case where function is called, but results in an error?
     }
     else if (ui->connectButton->text() == "Disconnect")
     {
-        ui->serialGroup->setEnabled(true);
-        ui->connectButton->setText("Connect");
+        if (ui->enableSerial->isChecked())
+        {
+            ui->serialGroup->setEnabled(true);
+            dataAdapter->stopThread();
+        }
 
-        dataAdapter->stopThread();
+        if (ui->enableNetwork->isChecked())
+        {
+            ui->networkGroup->setEnabled(true);
+            netAdapter->StopListening();
+        }
+
+        ui->connectButton->setText("Connect");
     }
 
 }
@@ -721,4 +751,24 @@ void MainWindow::on_fileloggingEnabled_stateChanged(int arg1)
         if (retVal != 0)
             ui->fileloggingEnabled->setChecked(false);
     }
+}
+
+void MainWindow::on_enableSerial_clicked()
+{
+    //  Return if network thread is running
+    if (netAdapter->isRunning())
+        return;
+
+    ui->networkGroup->setEnabled(false);
+    ui->serialGroup->setEnabled(true);
+}
+
+void MainWindow::on_enableNetwork_clicked()
+{
+    //  Return if serial thread is running
+    if (dataAdapter->isRunning())
+        return;
+
+    ui->serialGroup->setEnabled(false);
+    ui->networkGroup->setEnabled(true);
 }

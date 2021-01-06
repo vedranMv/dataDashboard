@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-QT += datavisualization core gui widgets serialport printsupport
+QT += datavisualization core gui widgets serialport printsupport network
 
 
 SOURCES += main.cpp scatter/scatterwindow.cpp \
@@ -11,6 +11,7 @@ SOURCES += main.cpp scatter/scatterwindow.cpp \
         line/lineplot.cpp \
         line/qcustomplot.cpp \
         mainwindow.cpp \
+        networkAdapter/networkadapter.cpp \
         orientation_3d/orientationwidget.cpp \
         orientation_3d/geometryengine.cpp \
         orientation_3d/orientationwindow.cpp \
@@ -27,6 +28,7 @@ HEADERS += scatter/scatterwindow.h \
     line/lineplot.h \
     line/qcustomplot.h \
     mainwindow.h \
+    networkAdapter/networkadapter.h \
     orientation_3d/orientationwindow.h \
     orientation_3d/orientationwidget.h \
     orientation_3d/geometryengine.h \

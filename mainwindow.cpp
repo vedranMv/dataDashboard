@@ -114,9 +114,6 @@ MainWindow::MainWindow(QWidget *parent) :
     mainTimer->setInterval(1000);
     QObject::connect(mainTimer, &QTimer::timeout, this, &MainWindow::refreshUI);
     mainTimer->start();
-
-    dataAdapter->RegisterMux(mux);
-    netAdapter->RegisterMux(mux);
 }
 
 /**
@@ -182,6 +179,7 @@ MainWindow::~MainWindow()
     //  Save network input settings
     settings->setValue("network/port",ui->netportSelector->value());
     settings->setValue("network/enabled",ui->enableNetwork->isChecked());
+    settings->setValue("port/enabled",ui->enableSerial->isChecked());
 
 
     settings->sync();
@@ -254,6 +252,13 @@ void MainWindow::LoadSettings()
 
     //  Load settings for network connection
     ui->netportSelector->setValue(settings->value("network/port","5555").toUInt());
+    ui->enableNetwork->setChecked(settings->value("network/enabled","false").toBool());
+    ui->enableSerial->setChecked(settings->value("port/enabled","true").toBool());
+    if (ui->enableNetwork->isChecked())
+        ui->networkGroup->setEnabled(true);
+    if (ui->enableSerial->isChecked())
+        ui->serialGroup->setEnabled(true);
+
 }
 
 /**
@@ -306,13 +311,13 @@ void MainWindow::toggleConnection()
         if (ui->enableSerial->isChecked())
         {
             //  Configure serial port
-            dataAdapter->updatePort(ui->portSelector->itemText(
+            dataAdapter->UpdatePort(ui->portSelector->itemText(
                                         ui->portSelector->currentIndex()), \
                                     ui->portBaud->itemText(ui->portBaud->currentIndex()));
             //  Prevent edits to serial port while connection is open
             ui->serialGroup->setEnabled(false);
 
-            dataAdapter->startThread();
+            dataAdapter->StartListening();
             //TODO: How to handle a case where function is called, but results in an error?
         }
 
@@ -332,7 +337,7 @@ void MainWindow::toggleConnection()
         if (ui->enableSerial->isChecked())
         {
             ui->serialGroup->setEnabled(true);
-            dataAdapter->stopThread();
+            dataAdapter->StopListening();
         }
 
         if (ui->enableNetwork->isChecked())
@@ -626,8 +631,8 @@ void MainWindow::on_add3D_clicked()
     static uint8_t _3DgraphCount = 0;
     QString winID = QString::number(_3DgraphCount);
 
-    OrientationWindow *orient3DWindow = new OrientationWindow(this);
-    orient3DWindow->setObjectName("orientationWindow_"+winID);
+    OrientationWindow *orient3DWindow = new OrientationWindow(this, "orientationWindow_"+winID);
+    //orient3DWindow->setObjectName("orientationWindow_"+winID);
     QObject::connect(orient3DWindow, &OrientationWindow::logLine,
                      this, &MainWindow::logLine);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(orient3DWindow);
@@ -650,8 +655,8 @@ void MainWindow::on_addScatter_clicked()
     QString winID = QString::number(_ScatterCount);
 
     //  Create scatter plot
-    ScatterWindow *scatterWindow = new ScatterWindow();
-    scatterWindow->setObjectName("scatterWindow_"+winID);
+    ScatterWindow *scatterWindow = new ScatterWindow("scatterWindow_"+winID);
+    //scatterWindow->setObjectName("scatterWindow_"+winID);
     QObject::connect(scatterWindow, &ScatterWindow::logLine,
                      this, &MainWindow::logLine);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(scatterWindow);
@@ -674,8 +679,8 @@ void MainWindow::on_addLine_clicked()
     QString winID = QString::number(_LineCount);
 
     //  Create line plot
-    LinePlot *lineplotWindow = new LinePlot();
-    lineplotWindow->setObjectName("lineWindow_"+winID);
+    LinePlot *lineplotWindow = new LinePlot("lineWindow_"+winID);
+    //lineplotWindow->setObjectName("lineWindow_"+winID);
     QObject::connect(lineplotWindow, &LinePlot::logLine,
                      this, &MainWindow::logLine);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(lineplotWindow);

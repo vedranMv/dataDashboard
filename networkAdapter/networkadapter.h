@@ -17,10 +17,8 @@ public:
 
     void SetNetPort(uint16_t port);
     uint16_t GetPort();
-    void StartListening();
+    bool StartListening();
     void StopListening();
-
-    void RegisterMux(DataMultiplexer* mux);
 
 signals:
     void logLine(const QString &s);
@@ -34,7 +32,7 @@ private:
 
     bool _threadQuit;
     QTcpServer *_tcpServer;
-    QTcpSocket *clientSocket;
+    QTcpSocket *_clientSocket;
 
     uint16_t _port;
     DataMultiplexer* _mux;

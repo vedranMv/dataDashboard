@@ -11,7 +11,7 @@ class OrientationWindow : public QMdiSubWindow
 {
     Q_OBJECT
 public:
-    OrientationWindow(QWidget *parent);
+    OrientationWindow(QWidget *parent, QString objName="");
     ~OrientationWindow();
 
     void ReceiveData(double *data, uint8_t n);

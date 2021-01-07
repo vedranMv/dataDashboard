@@ -4,10 +4,11 @@
 
 
 uint32_t _XaxisSize = 500;
-LinePlot::LinePlot():  _nInputs(1), _maxInChannel(0)
+LinePlot::LinePlot(QString objName):  _nInputs(1), _maxInChannel(0)
 {
      //  Create container window
     _contWind = new QWidget();
+    this->setObjectName(objName);
     windMainLayout = new QVBoxLayout(_contWind);
     this->setWidget(_contWind);
 
@@ -16,6 +17,23 @@ LinePlot::LinePlot():  _nInputs(1), _maxInChannel(0)
     _ConstructUI();
 
     _plotDataMutex.release();
+}
+
+LinePlot::~LinePlot()
+{
+    emit logLine("Line: Destroying the plot");
+    DataMultiplexer::GetI().UnregisterGraph(this);
+    //  Wait to get mutex before deleting the rest. Prevents rare crashes
+    //  when closing the window
+    _plotDataMutex.acquire();
+    _refresher->stop();
+    disconnect(_refresher, SIGNAL(timeout()), _plot, SLOT(replot()));
+    disconnect(DataMultiplexer::GetP(),
+                 &DataMultiplexer::ChannelsUpdated,
+                 _header,
+                 &graphHeaderWidget::UpdateChannelDropdown);
+    _plotDataMutex.release();
+    MainWindow::clearLayout(_contWind->layout());
 }
 
 /**
@@ -55,7 +73,7 @@ void LinePlot::_ConstructUI()
     emit logLine("Line: Constructing new UI with "+QString::number(_nInputs)+" channels");
 
     //  Basic header with input channel drop-downs
-    _header = new graphHeaderWidget(_nInputs);
+    _header = new graphHeaderWidget(_nInputs, this->objectName());
     windMainLayout->addLayout(_header->GetLayout());
 
     //  Reselect the channels
@@ -175,16 +193,6 @@ void LinePlot::_ConstructUI()
    DataMultiplexer::GetI().RegisterGraph(this->objectName(), _nInputs, this);
 }
 
-
-LinePlot::~LinePlot()
-{
-    emit logLine("Line: Destroying the plot");
-    DataMultiplexer::GetI().UnregisterGraph(this);
-    //  Wait to get mutex before deleting the rest. Prevents rare crashes
-    //  when closing the window
-    _plotDataMutex.acquire();
-    _plotDataMutex.release();
-}
 
 /**
  * @brief [Slot] Called when "Add channel" has been pressed

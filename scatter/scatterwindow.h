@@ -46,7 +46,7 @@ class ScatterWindow : public QMdiSubWindow
 {
     Q_OBJECT
 public:
-    explicit ScatterWindow();
+    explicit ScatterWindow(QString objName="");
     ~ScatterWindow() override;
 
     void UpdateInputChannels(uint8_t *inChannels);

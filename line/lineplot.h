@@ -10,7 +10,7 @@ class LinePlot : public QMdiSubWindow
 {
     Q_OBJECT
 public:
-    LinePlot();
+    LinePlot(QString objName="");
     ~LinePlot();
 
     void UpdateInputChannels(uint8_t *inChannels);

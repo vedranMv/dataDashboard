@@ -47,10 +47,10 @@ using namespace QtDataVisualization;
 
 int dataSize = 10000;
 
-ScatterWindow::ScatterWindow()
+ScatterWindow::ScatterWindow(QString objName)
 {
     _graph = new Q3DScatter();
-
+    this->setObjectName(objName);
     //  Create container window and set size policy
     _contWind = new QWidget();
 
@@ -58,7 +58,7 @@ ScatterWindow::ScatterWindow()
     QVBoxLayout *windMainLayout = new QVBoxLayout(_contWind);
     this->setWidget(_contWind);
 
-    _header = new graphHeaderWidget(3);
+    _header = new graphHeaderWidget(3, this->objectName());
     windMainLayout->addLayout(_header->GetLayout());
     //  Update channel labels
     _header->GetLabels()[0]->setText("X-axis");
@@ -168,6 +168,8 @@ ScatterWindow::~ScatterWindow()
     _graph->seriesList().clear();
     _graph->close();
     delete _graph;
+
+    MainWindow::clearLayout(_contWind->layout());
 }
 
 /**

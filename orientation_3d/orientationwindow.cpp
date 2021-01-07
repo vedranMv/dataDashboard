@@ -6,9 +6,10 @@
 #include <QQuaternion>
 
 
-OrientationWindow::OrientationWindow(QWidget *parent): _nInputs(3)
+OrientationWindow::OrientationWindow(QWidget *parent, QString objName): _nInputs(3)
 {
     this->setParent(parent);
+    this->setObjectName(objName);
     //  Create container window
     _contWind = new QWidget();
     this->setWidget(_contWind);
@@ -21,6 +22,12 @@ OrientationWindow::~OrientationWindow()
 {
     emit logLine("3D: Destroying the plot");
     DataMultiplexer::GetI().UnregisterGraph(this);
+
+    disconnect(DataMultiplexer::GetP(),
+                     &DataMultiplexer::ChannelsUpdated,
+                     _header,
+                     &graphHeaderWidget::UpdateChannelDropdown);
+    MainWindow::clearLayout(_contWind->layout());
 }
 
 void OrientationWindow::_ConstructUI()
@@ -46,7 +53,7 @@ void OrientationWindow::_ConstructUI()
     emit logLine("3D: Constructing new UI in " + mode);
 
     //  Basic header with input channel drop-downs
-    _header = new graphHeaderWidget(_nInputs);
+    _header = new graphHeaderWidget(_nInputs, this->objectName());
     windMainLayout->addLayout(_header->GetLayout());
 
     //  Line to separate channels from config

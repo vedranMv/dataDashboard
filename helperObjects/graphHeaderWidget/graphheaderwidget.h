@@ -13,7 +13,7 @@ class graphHeaderWidget : public QObject
     Q_OBJECT
 
 public:
-    graphHeaderWidget(uint8_t chnnelNum);
+    graphHeaderWidget(uint8_t chnnelNum, QString ParentWinName="");
     ~graphHeaderWidget();
 
     void AppendHorSpacer();
@@ -32,6 +32,7 @@ public slots:
 
 signals:
     void UpdateInputChannels(uint8_t *inChannels);
+    void logLine(const QString &line);
 
 private slots:
     void ComboBoxUpdated(const int &);
@@ -39,6 +40,7 @@ private slots:
 private:
 
     QHBoxLayout *_mainLayout;
+    QString _parentWinName;
 
     //  List of dynamically constructed UI elements
     QVector<QComboBox*>_inCh;

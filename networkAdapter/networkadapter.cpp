@@ -81,7 +81,7 @@ void NetworkAdapter::onReadyRead()
     QByteArray responseData = clientSocket->readAll();
     const QString response = QString::fromUtf8(responseData);
 
-    _mux->ReceiveSerialData(response);
+    _mux->ReceiveData(response);
 }
 
 

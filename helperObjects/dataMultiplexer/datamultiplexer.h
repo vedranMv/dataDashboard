@@ -43,7 +43,7 @@ public:
 
     void RegisterSerialCh(uint8_t n, QString *chName);
 
-    void ReceiveSerialData(const QString &s);
+    void ReceiveData(const QString &s);
 
 
     void RegisterGraph(QString name,
@@ -95,7 +95,7 @@ private:
         std::vector<GraphClient*>_Graphs;
 
         QString _buffer;
-        QSemaphore _SerialdataReady;
+        QSemaphore _InputdataReady;
 
         QFile *_logFile;
         QTextStream *_logFileStream;

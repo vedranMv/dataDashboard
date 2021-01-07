@@ -145,7 +145,7 @@ void SerialAdapter::run()
             const QString response = QString::fromUtf8(responseData);
 
             //emit this->response(response);
-            _mux->ReceiveSerialData(response);
+            _mux->ReceiveData(response);
         }
     }
     serial.close();

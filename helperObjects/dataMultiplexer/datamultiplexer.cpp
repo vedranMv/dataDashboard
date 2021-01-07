@@ -14,7 +14,7 @@ DataMultiplexer* DataMultiplexer::GetP()
 
 DataMultiplexer::DataMultiplexer(): _threadQuit(false)
 {
-    _SerialdataReady.release();
+    _InputdataReady.release();
 
     for (uint8_t i=0; i < 7; i++)
         _mChannel[i] = new MathChannel();
@@ -308,14 +308,14 @@ void DataMultiplexer::DisableFileLogging()
     logLine("Waiting on mutex to disable file logging");
 
     _logToFile = false;
-    _SerialdataReady.acquire(2);
+    _InputdataReady.acquire(2);
 
 
     _logFile->close();
     delete _logFileStream;
     _logFile->deleteLater();
 
-    _SerialdataReady.release(1);
+    _InputdataReady.release(1);
 
     logLine("File logging disabled");
 }
@@ -363,10 +363,10 @@ void DataMultiplexer::_ComputeMathChannels()
  * @param buffer buffer of received data that's passed to the main thread
  * for parsing and dispatching
  */
-void DataMultiplexer::ReceiveSerialData(const QString &buffer)
+void DataMultiplexer::ReceiveData(const QString &buffer)
 {
 
-    _SerialdataReady.acquire(1);
+    _InputdataReady.acquire(1);
 
     //  Buffer should never go over 4k, otherwise somethign is wrong
     if (_buffer.length() + buffer.length() < 4000)
@@ -382,7 +382,7 @@ void DataMultiplexer::ReceiveSerialData(const QString &buffer)
         start();
     }
 
-    _SerialdataReady.release(2);
+    _InputdataReady.release(2);
 }
 
 /**
@@ -396,15 +396,15 @@ void DataMultiplexer::run()
     emit logLine("Data thread started");
     while (!_threadQuit)
     {
-        if (!_SerialdataReady.tryAcquire(2,1))
+        if (!_InputdataReady.tryAcquire(2,1))
             continue;
 
         QString buffer = _buffer;
         //  Sanity check, has this been properly initialized?
         if (_SerialLabels.size() == 0)
         {
-            emit logLine(tr("No serial channels registered"));
-            _SerialdataReady.release(1);
+            emit logLine(tr("No input channels registered"));
+            _InputdataReady.release(1);
             return;
         }
 
@@ -555,7 +555,7 @@ void DataMultiplexer::run()
         _buffer = "";
 end_goto:
 
-        _SerialdataReady.release(1);
+        _InputdataReady.release(1);
 
     }
     emit logLine("Data thread stopped");

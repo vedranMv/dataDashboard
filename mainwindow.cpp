@@ -769,6 +769,7 @@ void MainWindow::on_enableSerial_clicked()
 
     ui->networkGroup->setEnabled(false);
     ui->serialGroup->setEnabled(true);
+    ui->enableSerial->setChecked(true);
 }
 
 void MainWindow::on_enableNetwork_clicked()
@@ -779,4 +780,5 @@ void MainWindow::on_enableNetwork_clicked()
 
     ui->serialGroup->setEnabled(false);
     ui->networkGroup->setEnabled(true);
+    ui->enableNetwork->setChecked(true);
 }

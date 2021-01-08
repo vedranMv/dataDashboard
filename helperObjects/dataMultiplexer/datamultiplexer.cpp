@@ -12,7 +12,8 @@ DataMultiplexer* DataMultiplexer::GetP()
     return &(GetI());
 }
 
-DataMultiplexer::DataMultiplexer(): _threadQuit(false)
+DataMultiplexer::DataMultiplexer(): _threadQuit(false), _sampleCount(0),
+    _extSampleCount(0)
 {
     _InputdataReady.release();
 
@@ -22,6 +23,10 @@ DataMultiplexer::DataMultiplexer(): _threadQuit(false)
     _logFile = nullptr;
     _logFileStream = nullptr;
     _logToFile = false;
+
+    connect(&_timer, &QTimer::timeout, this, &DataMultiplexer::_TimerTick);
+    _timer.setInterval(1000);
+    _timer.start();
 }
 
 DataMultiplexer::~DataMultiplexer()
@@ -34,6 +39,17 @@ DataMultiplexer::~DataMultiplexer()
         delete _mChannel[i];
 
     delete [] _channelData;
+}
+
+void DataMultiplexer::_TimerTick()
+{
+    _extSampleCount = _sampleCount;
+    _sampleCount = 0;
+}
+
+uint16_t DataMultiplexer::GetSampleRateEst()
+{
+    return _extSampleCount;
 }
 
 /**
@@ -548,7 +564,7 @@ void DataMultiplexer::run()
                 }
                 (*_logFileStream) << line << Qt::endl;
             }
-
+            _sampleCount++;
         }
         //  We've reached the end of buffer and successfully processed
         //  everything inside, clear it

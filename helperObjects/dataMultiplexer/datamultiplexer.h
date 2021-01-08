@@ -60,6 +60,7 @@ public:
     void UnregisterGraph(ScatterWindow* reciver);
     void UnregisterGraph(LinePlot* reciver);
 
+    uint16_t GetSampleRateEst();
 signals:
     void logLine(const QString &s);
     void ChannelsUpdated();
@@ -75,6 +76,8 @@ public slots:
     int EnableFileLogging(const QString &logPath, bool append, char chSep);
     void DisableFileLogging();
 
+private slots:
+    void _TimerTick();
 
 private:
         DataMultiplexer();
@@ -101,6 +104,10 @@ private:
         QTextStream *_logFileStream;
         bool _logToFile;
         char _logChSep;
+
+        uint16_t _sampleCount;
+        uint16_t _extSampleCount;
+        QTimer  _timer;
 };
 
 #endif // DATAMULTIPLEXER_H

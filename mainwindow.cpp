@@ -276,6 +276,9 @@ void MainWindow::refreshUI()
         for (const QSerialPortInfo &info : infos)
             ui->portSelector->addItem(info.portName());
     }
+
+    ui->sampleRate->setText("Data rate: "+
+                QString::number(mux->GetSampleRateEst())+" Hz");
 }
 
 /**

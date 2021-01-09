@@ -193,6 +193,9 @@ void ScatterWindow::UpdateInputChannels(uint8_t *inChannels)
     _graph->axisX()->setTitle(_header->GetChLabels()[0]);
     _graph->axisY()->setTitle(_header->GetChLabels()[1]);
     _graph->axisZ()->setTitle(_header->GetChLabels()[2]);
+
+    //  Reset plot on channel change
+    on_resetData_pressed();
 }
 
 /**

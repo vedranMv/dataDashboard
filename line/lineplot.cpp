@@ -3,8 +3,9 @@
 #include <mainwindow.h>
 
 
-uint32_t _XaxisSize = 500;
-LinePlot::LinePlot(QString objName):  _nInputs(1), _maxInChannel(0)
+const uint32_t XaxisSize = 500;
+
+LinePlot::LinePlot(QString objName):  _nInputs(1), _maxInChannel(0), _XaxisSize(XaxisSize)
 {
      //  Create container window
     _contWind = new QWidget();

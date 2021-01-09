@@ -71,6 +71,8 @@ private:
     uint8_t _maxInChannel;
 
     graphHeaderWidget *_header;
+
+    int _plotDataSize;
 };
 
 #endif

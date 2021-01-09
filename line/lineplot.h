@@ -47,6 +47,8 @@ private:
     QVector < QVector<double> >_inputCh;
     QVector<double> _xAxis;
     QTimer *_refresher;
+
+    uint32_t _XaxisSize;
 };
 
 #endif // LINEPLOT_H

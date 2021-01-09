@@ -222,6 +222,12 @@ void MainWindow::LoadSettings()
     ui->channelNumber->setValue(
                 settings->value("channel/numOfChannels","0").toInt());
 
+    //  Load number of math components (components must be added before
+    //  enabling channels)
+    uint8_t mathComponentCount = settings->value("math/componentCount","0").toUInt();
+    for (uint8_t i = 0; i < mathComponentCount; i++)
+        on_addMathComp_clicked();
+
     //  Read mask of enabled math channels and apply UI changes
     uint8_t mathChMask = settings->value("math/channelMask","0").toUInt();
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
@@ -229,11 +235,6 @@ void MainWindow::LoadSettings()
         {
             mathChEnabled[i]->setChecked(true);
         }
-
-    //  Load number of math components
-    uint8_t mathComponentCount = settings->value("math/componentCount","0").toUInt();
-    for (uint8_t i = 0; i < mathComponentCount; i++)
-        on_addMathComp_clicked();
 
     //  Load file logging settings
     ui->appendButton->setChecked(
@@ -514,7 +515,6 @@ void MainWindow::on_addMathComp_clicked()
 
     logLine("Math component "+id_str+" added to UI");
 
-    UpdateAvailMathCh();
     //  Set values from settings, if exist, otherwise load defaults
     tmp->SetInCh(settings->value("math/component"+id_str+"inCh","0").toInt());
     tmp->SetMathCh(settings->value("math/component"+id_str+"mathCh","1").toInt());

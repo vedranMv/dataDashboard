@@ -6,6 +6,10 @@
 #include <QLineEdit>
 #include <QString>
 
+/**
+ * @brief The Channel class
+ *      Used to dynamically construct input channels and assign them a label
+ */
 class Channel
 {
 public:

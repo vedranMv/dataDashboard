@@ -30,8 +30,13 @@ OrientationWindow::~OrientationWindow()
     MainWindow::clearLayout(_contWind->layout());
 }
 
+/**
+ * @brief Constructs UI based on configuration variables
+ *      Separated from the constructor to allow layout changes on runtime
+ */
 void OrientationWindow::_ConstructUI()
 {
+    //  Check if UI is already been constructed, then destroy it
     if (!_contWind->layout()->isEmpty())
     {
         emit logLine("3D: Deconstructing existing UI");
@@ -67,6 +72,7 @@ void OrientationWindow::_ConstructUI()
     _header->GetLayout()->addLayout(orientationSpecificHeader);
     _header->AppendHorSpacer();
 
+    //  Radio buttons for switching between euler and quat input
     QRadioButton *rpyInput = new QRadioButton();
     rpyInput->setText("Euler (RPY)");
     rpyInput->setToolTip(_STYLE_TOOLTIP_(\
@@ -77,6 +83,7 @@ void OrientationWindow::_ConstructUI()
     quatInput->setToolTip(_STYLE_TOOLTIP_(\
                     "Orientation is supplied as a normalized quaternion"));
 
+    //  Add radio buttons to the header widget
     if (_nInputs == 3)
         rpyInput->setChecked(true);
     else
@@ -135,6 +142,10 @@ void OrientationWindow::_ConstructUI()
     DataMultiplexer::GetI().RegisterGraph(this->objectName(), _nInputs, this);
 }
 
+/**
+ * @brief [Slot] Handle switching between the plot modes (euler vs quat.)
+ * @param rpySelected 'true' if euler mode has been selected
+ */
 void OrientationWindow::InputTypeUpdated(bool rpySelected)
 {
     emit logLine("3D: Mode change requested");

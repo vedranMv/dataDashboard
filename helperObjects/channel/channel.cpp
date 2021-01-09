@@ -10,7 +10,12 @@ Channel::Channel(QString label, int id, QString name)
     channelName->setText(name);
 }
 
-
+/**
+ * @brief Update channel components
+ * @param label new label for the channel
+ * @param id new channel id
+ * @param name new channel name
+ */
 void Channel::Update(QString label, int id, QString name)
 {
     chLabel->setText(label);

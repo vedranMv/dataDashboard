@@ -761,6 +761,10 @@ void MainWindow::on_fileloggingEnabled_stateChanged(int arg1)
     }
 }
 
+/**
+ * @brief [Slot] Enabled serial data input radio button
+ *      Handler for click event on radio button
+ */
 void MainWindow::on_enableSerial_clicked()
 {
     //  Return if network thread is running
@@ -772,6 +776,10 @@ void MainWindow::on_enableSerial_clicked()
     ui->enableSerial->setChecked(true);
 }
 
+/**
+ * @brief [Slot] Enabled network data input radio button
+ *      Handler for click event on radio button
+ */
 void MainWindow::on_enableNetwork_clicked()
 {
     //  Return if serial thread is running

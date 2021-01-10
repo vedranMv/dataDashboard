@@ -15,6 +15,7 @@ It is currently possible to:
 * Plot data in 3D scatter plot (or 2D by specifying one of the inputs as 0)
 * Create dashboard consisting of any combination of the visualizations above on runtime
 * Preserve settings between runs in a configuration file
+* Internal app log for easier troubleshooting
 
 ## Demo of current progress
 Few screenshots from ``/doc``, demonstrating the UI
@@ -25,7 +26,9 @@ Few screenshots from ``/doc``, demonstrating the UI
 
 [<img src="doc/math.PNG" width="500" /></a>](doc/comparison.PNG)
 
-Demo video: https://vedran.ml/public/projects/datadashboard/demo.mp4
+Demo videos: 
+* https://vedran.ml/public/projects/datadashboard/demo.mp4
+* https://vedran.ml/public/projects/datadashboard/demo_net.mp4
 
 ## How to run
 
@@ -67,7 +70,7 @@ After that, it's possible to:
 ## Known issues
 * Ubuntu 16.04/18.04: Launching scatter plot crashes the program (in Ubuntu 20.04 works as expected)
 * 3D orientation plot sometimes freezes (workaround: just switch to another tab, then reopen _Dashboard_ tab)
-* High data rates unsupported
+* High data rates unsupported (scatter plot results in biggest negative impact on performance, see video)
 
 ## Acknowledgments
 Made using:

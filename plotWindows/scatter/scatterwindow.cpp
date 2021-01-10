@@ -124,7 +124,7 @@ ScatterWindow::ScatterWindow(QString objName): _plotDataSize(dataSize)
     QFont font = _graph->activeTheme()->font();
     font.setPointSize(40.0f);
     _graph->activeTheme()->setFont(font);
-    _graph->setShadowQuality(QAbstract3DGraph::ShadowQualitySoftLow);
+    _graph->setShadowQuality(QAbstract3DGraph::ShadowQualityNone);
     _graph->scene()->activeCamera()->setCameraPreset(Q3DCamera::CameraPresetFront);
 
     QScatterDataProxy *proxy = new QScatterDataProxy(this);

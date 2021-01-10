@@ -1,12 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-
-#include "scatter/scatterwindow.h"
-#include "orientation_3d/orientationwindow.h"
-#include "line/lineplot.h"
+#include "plotWindows/scatter/scatterwindow.h"
+#include "plotWindows/orientation_3d/orientationwindow.h"
+#include "plotWindows/line/lineplot.h"
 #include "helperObjects/graphHeaderWidget/graphheaderwidget.h"
-
 
 #include <QApplication>
 #include <QLabel>
@@ -30,6 +28,9 @@
 
 #include <QSerialPortInfo>
 
+const QString __appVersion__ = "1.0";
+QString __configVersion__;
+
 MainWindow::MainWindow(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::MainWindow),
@@ -38,6 +39,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     //  Setup UI made in designer
     ui->setupUi(this);
+    setWindowIcon(QIcon(":/icons/icon.png"));
+
     //  Collect handles for checkboxes and names for math channels into arrays
     mathChEnabled.push_back(ui->mathCh1en);
     mathChEnabled.push_back(ui->mathCh2en);
@@ -55,12 +58,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     //  Initialize objects
     dataAdapter = new SerialAdapter();
+    netAdapter = new NetworkAdapter();
     mainTimer = new QTimer();
     mux = DataMultiplexer::GetP();
     settings = new QSettings(QString("config.ini"), QSettings::IniFormat);
 
-    //void response(const QString &s);
-    connect(dataAdapter, &SerialAdapter::response, mux, &DataMultiplexer::ReceiveSerialData);
     connect(mux, &DataMultiplexer::logLine, this, &MainWindow::logLine);
     logLine("Starting up..");
 
@@ -96,6 +98,9 @@ MainWindow::MainWindow(QWidget *parent) :
     //  Serial adapter objects logs data into a MainWindow logger
     QObject::connect(dataAdapter, &SerialAdapter::logLine,
                      this, &MainWindow::logLine);
+    //  Serial adapter objects logs data into a MainWindow logger
+    QObject::connect(netAdapter, &NetworkAdapter::logLine,
+                     this, &MainWindow::logLine);
 
     //  Connect channel enable signals to slot
     for (uint8_t i = 0; i < mathChEnabled.size(); i++)
@@ -112,11 +117,6 @@ MainWindow::MainWindow(QWidget *parent) :
     mainTimer->setInterval(1000);
     QObject::connect(mainTimer, &QTimer::timeout, this, &MainWindow::refreshUI);
     mainTimer->start();
-
-    dataAdapter->RegisterMux(mux);
-
-    //  TODO: Enable when used
-    ui->networkGroup->setVisible(false);
 }
 
 /**
@@ -127,11 +127,13 @@ MainWindow::~MainWindow()
 {
     logLine("Deleting main window");
     _pendingDeletion = true;
+
     //  Save port options
     settings->setValue("port/name",
                        ui->portSelector->itemText(ui->portSelector->currentIndex()));
     settings->setValue("port/baud",
                        ui->portBaud->itemText(ui->portBaud->currentIndex()));
+    settings->setValue("port/enabled",ui->enableNetwork->isChecked());
 
     settings->setValue("channel/startChar", ui->frameStartCh->text());
     settings->setValue("channel/separator", ui->frameChSeparator->text());
@@ -178,6 +180,12 @@ MainWindow::~MainWindow()
     //  Save currently open page
     settings->setValue("ui/startPage", ui->tabWidget->currentIndex());
 
+    //  Save network input settings
+    settings->setValue("network/port",ui->netportSelector->value());
+    settings->setValue("network/enabled",ui->enableNetwork->isChecked());
+    settings->setValue("port/enabled",ui->enableSerial->isChecked());
+
+
     settings->sync();
 
     for (Channel *X : ch)
@@ -202,6 +210,12 @@ MainWindow::~MainWindow()
  */
 void MainWindow::LoadSettings()
 {
+    //  Config file versioning
+    __configVersion__ =
+            settings->value("misc/configVersion",__appVersion__).toString();
+    settings->setValue("misc/configVersion",__configVersion__);
+    settings->sync();
+
     //  Data frame settings
     ui->frameStartCh->setText(
                 settings->value("channel/startChar","").toString());
@@ -215,8 +229,15 @@ void MainWindow::LoadSettings()
                 settings->value("channel/endCharR","false").toBool());
 
     //  Number of data channels
-    ui->channelNumber->setValue(
-                settings->value("channel/numOfChannels","0").toInt());
+    uint8_t nInChannels = settings->value("channel/numOfChannels","1").toInt();
+    ui->channelNumber->setValue(nInChannels);
+    on_channelNumber_valueChanged(ui->channelNumber->value());
+
+    //  Load number of math components (components must be added before
+    //  enabling channels)
+    uint8_t mathComponentCount = settings->value("math/componentCount","0").toUInt();
+    for (uint8_t i = 0; i < mathComponentCount; i++)
+        on_addMathComp_clicked();
 
     //  Read mask of enabled math channels and apply UI changes
     uint8_t mathChMask = settings->value("math/channelMask","0").toUInt();
@@ -225,11 +246,7 @@ void MainWindow::LoadSettings()
         {
             mathChEnabled[i]->setChecked(true);
         }
-
-    //  Load number of math components
-    uint8_t mathComponentCount = settings->value("math/componentCount","0").toUInt();
-    for (uint8_t i = 0; i < mathComponentCount; i++)
-        on_addMathComp_clicked();
+    UpdateAvailMathCh();
 
     //  Load file logging settings
     ui->appendButton->setChecked(
@@ -245,6 +262,16 @@ void MainWindow::LoadSettings()
 
     //  Restore last opened tab
     ui->tabWidget->setCurrentIndex(settings->value("ui/startPage","0").toUInt());
+
+    //  Load settings for network connection
+    ui->netportSelector->setValue(settings->value("network/port","5555").toUInt());
+    ui->enableNetwork->setChecked(settings->value("network/enabled","false").toBool());
+    ui->enableSerial->setChecked(settings->value("port/enabled","true").toBool());
+    if (ui->enableNetwork->isChecked())
+        ui->networkGroup->setEnabled(true);
+    if (ui->enableSerial->isChecked())
+        ui->serialGroup->setEnabled(true);
+
 }
 
 /**
@@ -262,6 +289,9 @@ void MainWindow::refreshUI()
         for (const QSerialPortInfo &info : infos)
             ui->portSelector->addItem(info.portName());
     }
+
+    ui->sampleRate->setText("Data rate: "+
+                QString::number(mux->GetSampleRateEst())+" Hz");
 }
 
 /**
@@ -280,6 +310,12 @@ void MainWindow::toggleConnection()
         if (ui->termSlashN->isChecked())
             termSeq += QChar(0x000A);
 
+        if (ui->frameChSeparator->text() == "" ||
+                termSeq == "")
+        {
+            logLine("Frame channel separator and frame terminator cannot be empty!");
+            return;
+        }
         mux->SetSerialFrameFormat(ui->frameStartCh->text(), \
                 ui->frameChSeparator->text(), \
                 termSeq);
@@ -294,24 +330,45 @@ void MainWindow::toggleConnection()
         //  Clean up before exit
         delete[] chLabels;
 
-        //  Configure serial port
-        dataAdapter->updatePort(ui->portSelector->itemText(
-                                    ui->portSelector->currentIndex()), \
-                                ui->portBaud->itemText(ui->portBaud->currentIndex()));
-        //  Prevent edits to serial port while connection is open
-        ui->serialGroup->setEnabled(false);
+        if (ui->enableSerial->isChecked())
+        {
+            //  Configure serial port
+            dataAdapter->UpdatePort(ui->portSelector->itemText(
+                                        ui->portSelector->currentIndex()), \
+                                    ui->portBaud->itemText(ui->portBaud->currentIndex()));
+            //  Prevent edits to serial port while connection is open
+            ui->serialGroup->setEnabled(false);
+
+            dataAdapter->StartListening();
+            //TODO: How to handle a case where function is called, but results in an error?
+        }
+
+        if (ui->enableNetwork->isChecked())
+        {
+            //  TODO: Input validation on port!
+            netAdapter->SetNetPort(ui->netportSelector->value());
+            ui->networkGroup->setEnabled(false);
+
+            netAdapter->StartListening();
+        }
         //  Rename the button
         ui->connectButton->setText("Disconnect");
-
-        dataAdapter->startThread();
-        //TODO: How to handle a case where function is called, but results in an error?
     }
     else if (ui->connectButton->text() == "Disconnect")
     {
-        ui->serialGroup->setEnabled(true);
-        ui->connectButton->setText("Connect");
+        if (ui->enableSerial->isChecked())
+        {
+            ui->serialGroup->setEnabled(true);
+            dataAdapter->StopListening();
+        }
 
-        dataAdapter->stopThread();
+        if (ui->enableNetwork->isChecked())
+        {
+            ui->networkGroup->setEnabled(true);
+            netAdapter->StopListening();
+        }
+
+        ui->connectButton->setText("Connect");
     }
 
 }
@@ -397,7 +454,6 @@ void MainWindow::on_channelNumber_valueChanged(int arg1)
 
         //  Add UI elements to a layout, then push layout into the UI
         entry->addWidget(tmp->chLabel, 0, Qt::AlignLeft);
-        entry->addWidget(tmp->channelId, 0, Qt::AlignLeft);
         entry->addWidget(tmp->channelName, 0, Qt::AlignLeft);
         ui->channelList->addLayout(entry);
     }
@@ -461,8 +517,9 @@ void MainWindow::RegisterMathChannel(uint8_t chID)
  */
 void MainWindow::on_addMathComp_clicked()
 {
+    static uint32_t _id = 0;
     //  Convert current id to string for easier manipulation
-    QString id_str = QString::number(mathComp.size());
+    QString id_str = QString::number(_id);
 
     logLine("Adding math component "+id_str);
 
@@ -476,7 +533,6 @@ void MainWindow::on_addMathComp_clicked()
 
     logLine("Math component "+id_str+" added to UI");
 
-    UpdateAvailMathCh();
     //  Set values from settings, if exist, otherwise load defaults
     tmp->SetInCh(settings->value("math/component"+id_str+"inCh","0").toInt());
     tmp->SetMathCh(settings->value("math/component"+id_str+"mathCh","1").toInt());
@@ -486,6 +542,7 @@ void MainWindow::on_addMathComp_clicked()
             this, &MainWindow::on_delete_updateMathComp);
 
     logLine("Saved math component "+id_str);
+    _id++;
 }
 
 /**
@@ -596,8 +653,8 @@ void MainWindow::on_add3D_clicked()
     static uint8_t _3DgraphCount = 0;
     QString winID = QString::number(_3DgraphCount);
 
-    OrientationWindow *orient3DWindow = new OrientationWindow(this);
-    orient3DWindow->setObjectName("orientationWindow_"+winID);
+    OrientationWindow *orient3DWindow = new OrientationWindow(this, "orientationWindow_"+winID);
+    //orient3DWindow->setObjectName("orientationWindow_"+winID);
     QObject::connect(orient3DWindow, &OrientationWindow::logLine,
                      this, &MainWindow::logLine);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(orient3DWindow);
@@ -605,6 +662,7 @@ void MainWindow::on_add3D_clicked()
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
     plotWindow->setAttribute(Qt::WA_DeleteOnClose, true);
     plotWindow->setWindowTitle("3D Orientation " + winID);
+    plotWindow->setWindowIcon(QIcon(":/icons/icon.png"));
 
     plotWindow->show();
     _3DgraphCount++;
@@ -620,8 +678,8 @@ void MainWindow::on_addScatter_clicked()
     QString winID = QString::number(_ScatterCount);
 
     //  Create scatter plot
-    ScatterWindow *scatterWindow = new ScatterWindow();
-    scatterWindow->setObjectName("scatterWindow_"+winID);
+    ScatterWindow *scatterWindow = new ScatterWindow("scatterWindow_"+winID);
+    //scatterWindow->setObjectName("scatterWindow_"+winID);
     QObject::connect(scatterWindow, &ScatterWindow::logLine,
                      this, &MainWindow::logLine);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(scatterWindow);
@@ -629,6 +687,7 @@ void MainWindow::on_addScatter_clicked()
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
     plotWindow->setAttribute(Qt::WA_DeleteOnClose, true);
     plotWindow->setWindowTitle("Scatter " + winID);
+    plotWindow->setWindowIcon(QIcon(":/icons/icon.png"));
 
     plotWindow->show();
     _ScatterCount++;
@@ -644,8 +703,8 @@ void MainWindow::on_addLine_clicked()
     QString winID = QString::number(_LineCount);
 
     //  Create line plot
-    LinePlot *lineplotWindow = new LinePlot();
-    lineplotWindow->setObjectName("lineWindow_"+winID);
+    LinePlot *lineplotWindow = new LinePlot("lineWindow_"+winID);
+    //lineplotWindow->setObjectName("lineWindow_"+winID);
     QObject::connect(lineplotWindow, &LinePlot::logLine,
                      this, &MainWindow::logLine);
     QMdiSubWindow *plotWindow = ui->mdiArea->addSubWindow(lineplotWindow);
@@ -653,6 +712,7 @@ void MainWindow::on_addLine_clicked()
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
     plotWindow->setAttribute(Qt::WA_DeleteOnClose, true);
     plotWindow->setWindowTitle("Line plot " + winID);
+    plotWindow->setWindowIcon(QIcon(":/icons/icon.png"));
 
     plotWindow->show();
     _LineCount++;
@@ -721,4 +781,34 @@ void MainWindow::on_fileloggingEnabled_stateChanged(int arg1)
         if (retVal != 0)
             ui->fileloggingEnabled->setChecked(false);
     }
+}
+
+/**
+ * @brief [Slot] Enabled serial data input radio button
+ *      Handler for click event on radio button
+ */
+void MainWindow::on_enableSerial_clicked()
+{
+    //  Return if network thread is running
+    if (netAdapter->isRunning())
+        return;
+
+    ui->networkGroup->setEnabled(false);
+    ui->serialGroup->setEnabled(true);
+    ui->enableSerial->setChecked(true);
+}
+
+/**
+ * @brief [Slot] Enabled network data input radio button
+ *      Handler for click event on radio button
+ */
+void MainWindow::on_enableNetwork_clicked()
+{
+    //  Return if serial thread is running
+    if (dataAdapter->isRunning())
+        return;
+
+    ui->serialGroup->setEnabled(false);
+    ui->networkGroup->setEnabled(true);
+    ui->enableNetwork->setChecked(true);
 }

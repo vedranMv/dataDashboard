@@ -4,14 +4,14 @@
 #include <QMdiSubWindow>
 #include <QWidget>
 #include <helperObjects/graphHeaderWidget/graphheaderwidget.h>
-#include "orientation_3d/orientationwidget.h"
+#include "plotWindows/orientation_3d/orientationwidget.h"
 
 
 class OrientationWindow : public QMdiSubWindow
 {
     Q_OBJECT
 public:
-    OrientationWindow(QWidget *parent);
+    OrientationWindow(QWidget *parent, QString objName="");
     ~OrientationWindow();
 
     void ReceiveData(double *data, uint8_t n);

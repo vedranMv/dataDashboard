@@ -21,8 +21,8 @@
  *      is added in the back, shown in /
  * @param chnnelNum Number of input channels
  */
-graphHeaderWidget::graphHeaderWidget(uint8_t chnnelNum)
-    :  _parent(nullptr)
+graphHeaderWidget::graphHeaderWidget(uint8_t chnnelNum, QString ParentWinName)
+    :  _parentWinName(ParentWinName), _parent(nullptr)
 {
     //  Create layouts
     _mainLayout = new QHBoxLayout();
@@ -80,8 +80,11 @@ void graphHeaderWidget::AppendHorSpacer()
  */
 void graphHeaderWidget::UpdateChannelDropdown()
 {
+    QString time = QDateTime::currentDateTime().time().toString();
+    emit logLine("Updating channel dropdown for "+_parentWinName);
     for (QComboBox* X : _inCh)
     {
+        emit logLine(" Processing");
         //  Save selected entry in an attempt to reselect it after refresh
         QString currentItem = X->currentText();
         //  Clear list
@@ -93,6 +96,9 @@ void graphHeaderWidget::UpdateChannelDropdown()
         if (newIndex >= 0)
             X->setCurrentIndex(newIndex);
     }
+
+    time = QDateTime::currentDateTime().time().toString();
+    emit logLine("Finished updating channel dropdown for "+_parentWinName);
 }
 
 /**

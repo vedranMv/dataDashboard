@@ -1,4 +1,5 @@
 #include "mathchannelcomponent.h"
+#include "helperObjects/dataMultiplexer/mathchannel.h"
 
 #define _STYLE_TOOLTIP_(X) "<html><head/><body><p>" X "</p></body></html>"
 
@@ -16,6 +17,10 @@ UIMathChannelComponent::~UIMathChannelComponent()
     layout->deleteLater();
 }
 
+/**
+ * @brief Constructor
+ * @param id unique identifier of the component
+ */
 UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
 {
     QLabel *labels[4];
@@ -29,13 +34,10 @@ UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
     mathChSelector = new QComboBox();
     inChSelector = new QSpinBox();
 
+    //  Populate dropdown with operation text
     mathSelector = new QComboBox();
-    mathSelector->addItem("+");
-    mathSelector->addItem("-");
-    mathSelector->addItem("*");
-    mathSelector->addItem("+ ABS");
-    mathSelector->addItem(" - ABS");
-    mathSelector->addItem("* ABS");
+    for (auto &X : MathOperationText)
+        mathSelector->addItem(X);
 
     deleteButton = new QPushButton();
     deleteButton->setText("X");
@@ -79,6 +81,11 @@ UIMathChannelComponent::UIMathChannelComponent(uint8_t id): _id(id)
                      this, &UIMathChannelComponent::deleteComponent);
 }
 
+/**
+ * @brief Update the list of math channels with the newly provided one
+ * @param mathCh Array of new math channel IDs
+ * @param size Size of mathCh array
+ */
 void UIMathChannelComponent::UpdateMathCh(int *mathCh, int size)
 {
     int oldCh = mathChSelector->currentText().toInt(),
@@ -89,28 +96,42 @@ void UIMathChannelComponent::UpdateMathCh(int *mathCh, int size)
     {
         mathChSelector->addItem(QString::number(mathCh[i]));
         //  Attempt to preserve selected channel, if it
-        //  exists in the new list save it's index and
+        //  exists in the new list save its index and
         //  activate it afterwards
         if (mathCh[i] == oldCh)
             index = i;
     }
     mathChSelector->setCurrentIndex(index);
 }
+
+/**
+ * @brief Set selected input channel
+ * @param inCh Input channel to take the data from for this math component
+ */
 void UIMathChannelComponent::SetInCh(int inCh)
 {
     inChSelector->setValue(inCh);
 }
 
+/**
+ * @brief Get currently selected input channel
+ * @return Currently selected input channel
+ */
 int UIMathChannelComponent::GetInCh()
 {
     return inChSelector->value();
 }
 
+/**
+ * @brief Set selected math channel for this component
+ * @param mathCh Math channel to be associated with this math component
+ */
 void UIMathChannelComponent::SetMathCh(int mathCh)
 {
     bool valid = false;
     int i;
 
+    //  Find if desired math channel exists
     for (i = 0; i < mathChSelector->count(); i++)
         if (mathChSelector->itemText(i).toInt() == mathCh)
         {
@@ -118,43 +139,68 @@ void UIMathChannelComponent::SetMathCh(int mathCh)
             break;
         }
 
+    //  If it exists, select it
     if (valid)
         mathChSelector->setCurrentIndex(i);
 }
 
+/**
+ * @brief Get selected math channel for this component
+ * @return
+ */
 int UIMathChannelComponent::GetMathCh()
 {
     return mathChSelector->currentText().toInt();
 }
 
+/**
+ * @brief Set math operation for this component
+ * @param math id of math component
+ */
 void UIMathChannelComponent::SetMath(int math)
 {
-    //  0 - Add
-    //  1 - Subtract
     mathSelector->setCurrentIndex(math);
 }
 
+/**
+ * @brief Get selected math operation for this component
+ * @return id of the selected math component
+ */
 int UIMathChannelComponent::GetMath()
 {
-    //  0 - Add
-    //  1 - Subtract
     return mathSelector->currentIndex();
 }
 
+/**
+ * @brief [Slot] Called by parent to delete this component
+ */
 void UIMathChannelComponent::deleteComponent()
 {
     emit deleteRequested(_id);
 }
 
+/**
+ * @brief Return layout of this component (used in deletion)
+ * @return
+ */
 QHBoxLayout* UIMathChannelComponent::GetLayout()
 {
     return layout;
 }
 
+/**
+ * @brief Set this component's ID
+ * @param id id to set
+ */
 void UIMathChannelComponent::SetID(uint8_t id)
 {
     _id = id;
 }
+
+/**
+ * @brief Get this component's ID
+ * @return
+ */
 uint8_t  UIMathChannelComponent::GetID()
 {
     return _id;

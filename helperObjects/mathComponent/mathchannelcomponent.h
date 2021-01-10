@@ -10,6 +10,11 @@
 #include <QHBoxLayout>
 #include <QSpacerItem>
 
+/**
+ * @brief The UIMathChannelComponent class
+ *      Object dynamically constructed in UI to represent match channel
+ *      components under 'Math channel' page.
+ */
 class UIMathChannelComponent :  public QObject
 {
     Q_OBJECT

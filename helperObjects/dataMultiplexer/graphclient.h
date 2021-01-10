@@ -1,9 +1,7 @@
 #ifndef GRAPHCLIENT_H
 #define GRAPHCLIENT_H
 
-#include <orientation_3d/orientationwindow.h>
-#include <scatter/scatterwindow.h>
-#include <line/lineplot.h>
+#include <plotWindows/plotWindows.h>
 
 enum GraphType {
     Orientation3D,

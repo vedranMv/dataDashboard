@@ -2,7 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QWidget>
-#include "serialAdapter/serialadapter.h"
+#include "dataSources/dataSources.h"
 #include "helperObjects/channel/channel.h"
 #include "helperObjects/mathComponent/mathchannelcomponent.h"
 #include "helperObjects/dataMultiplexer/datamultiplexer.h"
@@ -53,6 +53,10 @@ private slots:
 
     void on_addLine_clicked();
 
+    void on_enableSerial_clicked();
+
+    void on_enableNetwork_clicked();
+
 private:
     void LoadSettings();
 
@@ -61,6 +65,7 @@ private:
     Ui::MainWindow *ui;
     bool _pendingDeletion;
     SerialAdapter *dataAdapter;
+    NetworkAdapter *netAdapter;
 
     QSettings   *settings;
     QTimer      *mainTimer;

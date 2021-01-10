@@ -4,8 +4,12 @@
 #include <QString>
 #include <vector>
 #include <tuple>
+#include <QVector>
 
-
+/**
+ * @brief The SignalSource enum
+ *      Describing signal origin
+ */
 enum SignalSource {
     AllChannels,
     SerialSignal,
@@ -13,6 +17,10 @@ enum SignalSource {
     NetworkSignal
 };
 
+/**
+ * @brief The MathOperation enum
+ *      Math operation ID (used in math componenets)
+ */
 enum MathOperation {
     Add_Signal,
     Subtract_Signal,
@@ -22,7 +30,18 @@ enum MathOperation {
     Multiply_Abs
 };
 
-
+/**
+ * @brief The MathOperationText lookup table
+ *      Links \ref enum MathOperation ID to a string
+ */
+const QVector<QString> MathOperationText {
+    "+",
+    "-",
+    "*",
+    "+ ABS",
+    " - ABS",
+    "* ABS"
+};
 
 /**
  * @brief The MathChannel class
@@ -41,12 +60,18 @@ public:
     {
          return _label;
     }
-
-    void AddComponent(MathOperation operation, uint8_t serialChannel)
+    /**
+     * @brief Add new math component to this math channel
+     * @param operation id of math operation
+     * @param inputChannel input channel to use in the component
+     */
+    void AddComponent(MathOperation operation, uint8_t inputChannel)
     {
-        _component.push_back(std::tuple<MathOperation,uint8_t>(operation,serialChannel));
+        _component.push_back(std::tuple<MathOperation,uint8_t>(operation,inputChannel));
     }
-
+    /**
+     * @brief Reset the component
+     */
     void Clear()
     {
         Enabled = false;

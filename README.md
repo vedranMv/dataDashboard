@@ -17,7 +17,13 @@ It is currently possible to:
 * Preserve settings between runs in a configuration file
 
 ## Demo of current progress
-``/doc`` folder contains few screenshoots, demonstrating the functionality
+Few screenshots from ``/doc``, demonstrating the UI
+
+[<img src="doc/dashboard.PNG" width="500" />](doc/dashboard.PNG)
+
+[<img src="doc/input.PNG" width="500" />](doc/input.PNG)
+
+[<img src="doc/math.PNG" width="500" /></a>](doc/comparison.PNG)
 
 Demo video: https://vedran.ml/public/projects/datadashboard/demo.mp4
 
@@ -61,6 +67,7 @@ After that, it's possible to:
 ## Known issues
 * Ubuntu 16.04/18.04: Launching scatter plot crashes the program (in Ubuntu 20.04 works as expected)
 * 3D orientation plot sometimes freezes (workaround: just switch to another tab, then reopen _Dashboard_ tab)
+* High data rates unsupported
 
 ## Acknowledgments
 Made using:

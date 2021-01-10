@@ -2,8 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QWidget>
-#include "serialAdapter/serialadapter.h"
-#include "networkAdapter/networkadapter.h"
+#include "dataSources/dataSources.h"
 #include "helperObjects/channel/channel.h"
 #include "helperObjects/mathComponent/mathchannelcomponent.h"
 #include "helperObjects/dataMultiplexer/datamultiplexer.h"

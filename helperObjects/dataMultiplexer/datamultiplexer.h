@@ -14,9 +14,7 @@
 #include <tuple>
 #include <QThread>
 
-#include <orientation_3d/orientationwindow.h>
-#include <scatter/scatterwindow.h>
-#include <line/lineplot.h>
+#include <plotWindows/plotWindows.h>
 
 #include "graphclient.h"
 #include "mathchannel.h"

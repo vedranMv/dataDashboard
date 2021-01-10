@@ -4,7 +4,7 @@
 #include <QMdiSubWindow>
 
 #include <helperObjects/graphHeaderWidget/graphheaderwidget.h>
-#include "line/qcustomplot.h"
+#include "plotWindows/line/qcustomplot.h"
 
 class LinePlot : public QMdiSubWindow
 {

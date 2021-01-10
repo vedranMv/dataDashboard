@@ -876,10 +876,13 @@
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
+           <property name="sizeType">
+            <enum>QSizePolicy::Fixed</enum>
+           </property>
            <property name="sizeHint" stdset="0">
             <size>
              <width>20</width>
-             <height>20</height>
+             <height>50</height>
             </size>
            </property>
           </spacer>
@@ -945,7 +948,7 @@ p, li { white-space: pre-wrap; }
               <x>0</x>
               <y>0</y>
               <width>498</width>
-              <height>198</height>
+              <height>218</height>
              </rect>
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_7">

@@ -4,7 +4,7 @@
 #include <QMdiSubWindow>
 #include <QWidget>
 #include <helperObjects/graphHeaderWidget/graphheaderwidget.h>
-#include "orientation_3d/orientationwidget.h"
+#include "plotWindows/orientation_3d/orientationwidget.h"
 
 
 class OrientationWindow : public QMdiSubWindow

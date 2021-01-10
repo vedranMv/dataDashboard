@@ -1,9 +1,9 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include "scatter/scatterwindow.h"
-#include "orientation_3d/orientationwindow.h"
-#include "line/lineplot.h"
+#include "plotWindows/scatter/scatterwindow.h"
+#include "plotWindows/orientation_3d/orientationwindow.h"
+#include "plotWindows/line/lineplot.h"
 #include "helperObjects/graphHeaderWidget/graphheaderwidget.h"
 
 #include <QApplication>

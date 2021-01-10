@@ -23,7 +23,7 @@ public:
     ~Channel();
 
     QLabel *chLabel;
-    QSpinBox *channelId;
+    int channelId;
     QLineEdit *channelName;
 };
 

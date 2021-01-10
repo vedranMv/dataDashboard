@@ -39,6 +39,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     //  Setup UI made in designer
     ui->setupUi(this);
+    setWindowIcon(QIcon(":/icons/icon.png"));
+
     //  Collect handles for checkboxes and names for math channels into arrays
     mathChEnabled.push_back(ui->mathCh1en);
     mathChEnabled.push_back(ui->mathCh2en);
@@ -227,8 +229,9 @@ void MainWindow::LoadSettings()
                 settings->value("channel/endCharR","false").toBool());
 
     //  Number of data channels
-    ui->channelNumber->setValue(
-                settings->value("channel/numOfChannels","0").toInt());
+    uint8_t nInChannels = settings->value("channel/numOfChannels","1").toInt();
+    ui->channelNumber->setValue(nInChannels);
+    on_channelNumber_valueChanged(ui->channelNumber->value());
 
     //  Load number of math components (components must be added before
     //  enabling channels)
@@ -307,6 +310,12 @@ void MainWindow::toggleConnection()
         if (ui->termSlashN->isChecked())
             termSeq += QChar(0x000A);
 
+        if (ui->frameChSeparator->text() == "" ||
+                termSeq == "")
+        {
+            logLine("Frame channel separator and frame terminator cannot be empty!");
+            return;
+        }
         mux->SetSerialFrameFormat(ui->frameStartCh->text(), \
                 ui->frameChSeparator->text(), \
                 termSeq);
@@ -445,7 +454,6 @@ void MainWindow::on_channelNumber_valueChanged(int arg1)
 
         //  Add UI elements to a layout, then push layout into the UI
         entry->addWidget(tmp->chLabel, 0, Qt::AlignLeft);
-        entry->addWidget(tmp->channelId, 0, Qt::AlignLeft);
         entry->addWidget(tmp->channelName, 0, Qt::AlignLeft);
         ui->channelList->addLayout(entry);
     }
@@ -654,6 +662,7 @@ void MainWindow::on_add3D_clicked()
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
     plotWindow->setAttribute(Qt::WA_DeleteOnClose, true);
     plotWindow->setWindowTitle("3D Orientation " + winID);
+    plotWindow->setWindowIcon(QIcon(":/icons/icon.png"));
 
     plotWindow->show();
     _3DgraphCount++;
@@ -678,6 +687,7 @@ void MainWindow::on_addScatter_clicked()
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
     plotWindow->setAttribute(Qt::WA_DeleteOnClose, true);
     plotWindow->setWindowTitle("Scatter " + winID);
+    plotWindow->setWindowIcon(QIcon(":/icons/icon.png"));
 
     plotWindow->show();
     _ScatterCount++;
@@ -702,6 +712,7 @@ void MainWindow::on_addLine_clicked()
     plotWindow->setWindowFlags(Qt::WindowCloseButtonHint);
     plotWindow->setAttribute(Qt::WA_DeleteOnClose, true);
     plotWindow->setWindowTitle("Line plot " + winID);
+    plotWindow->setWindowIcon(QIcon(":/icons/icon.png"));
 
     plotWindow->show();
     _LineCount++;

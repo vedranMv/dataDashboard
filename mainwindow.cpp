@@ -1,12 +1,10 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-
 #include "scatter/scatterwindow.h"
 #include "orientation_3d/orientationwindow.h"
 #include "line/lineplot.h"
 #include "helperObjects/graphHeaderWidget/graphheaderwidget.h"
-
 
 #include <QApplication>
 #include <QLabel>
@@ -29,6 +27,9 @@
 #include <QFileDialog>
 
 #include <QSerialPortInfo>
+
+const QString __appVersion__ = "1.0";
+QString __configVersion__;
 
 MainWindow::MainWindow(QWidget *parent) :
     QWidget(parent),
@@ -124,6 +125,7 @@ MainWindow::~MainWindow()
 {
     logLine("Deleting main window");
     _pendingDeletion = true;
+
     //  Save port options
     settings->setValue("port/name",
                        ui->portSelector->itemText(ui->portSelector->currentIndex()));
@@ -206,6 +208,12 @@ MainWindow::~MainWindow()
  */
 void MainWindow::LoadSettings()
 {
+    //  Config file versioning
+    __configVersion__ =
+            settings->value("misc/configVersion",__appVersion__).toString();
+    settings->setValue("misc/configVersion",__configVersion__);
+    settings->sync();
+
     //  Data frame settings
     ui->frameStartCh->setText(
                 settings->value("channel/startChar","").toString());
@@ -235,6 +243,7 @@ void MainWindow::LoadSettings()
         {
             mathChEnabled[i]->setChecked(true);
         }
+    UpdateAvailMathCh();
 
     //  Load file logging settings
     ui->appendButton->setChecked(
@@ -500,8 +509,9 @@ void MainWindow::RegisterMathChannel(uint8_t chID)
  */
 void MainWindow::on_addMathComp_clicked()
 {
+    static uint32_t _id = 0;
     //  Convert current id to string for easier manipulation
-    QString id_str = QString::number(mathComp.size());
+    QString id_str = QString::number(_id);
 
     logLine("Adding math component "+id_str);
 
@@ -524,6 +534,7 @@ void MainWindow::on_addMathComp_clicked()
             this, &MainWindow::on_delete_updateMathComp);
 
     logLine("Saved math component "+id_str);
+    _id++;
 }
 
 /**

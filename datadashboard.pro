@@ -35,6 +35,7 @@ HEADERS += scatter/scatterwindow.h \
     serialAdapter/serialadapter.h
 
 RESOURCES += \
+    res/icon.qrc \
     orientation_3d/resources/shaders.qrc \
     orientation_3d/resources/textures.qrc \
     config.ini

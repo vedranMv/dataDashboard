@@ -78,7 +78,7 @@
          <item>
           <widget class="QLabel" name="sampleRate">
            <property name="text">
-            <string>TextLabel</string>
+            <string>Sample rate</string>
            </property>
           </widget>
          </item>
@@ -114,6 +114,9 @@
          </property>
          <item>
           <widget class="QRadioButton" name="enableSerial">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set serial port as input channel&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Enable</string>
            </property>
@@ -236,6 +239,9 @@
          </item>
          <item>
           <widget class="QRadioButton" name="enableNetwork">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set network port as input channel&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Enable</string>
            </property>
@@ -270,6 +276,9 @@
               </item>
               <item>
                <widget class="QSpinBox" name="netportSelector">
+                <property name="toolTip">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Network port to listen on for incoming data (remember to open this port in your firewall if using external data source)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
                 <property name="minimum">
                  <number>1</number>
                 </property>
@@ -448,6 +457,19 @@
                 </property>
                </widget>
               </item>
+              <item row="3" column="0">
+               <widget class="QLabel" name="label_16">
+                <property name="text">
+                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#747474;&quot;&gt;(Channel separator and frame terminator are required)&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+                </property>
+                <property name="wordWrap">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
             <item>
@@ -496,6 +518,9 @@
                   </property>
                   <property name="maximum">
                    <number>20</number>
+                  </property>
+                  <property name="value">
+                   <number>1</number>
                   </property>
                  </widget>
                 </item>
@@ -892,7 +917,11 @@
          <item>
           <widget class="QLabel" name="label_12">
            <property name="text">
-            <string>Active math components</string>
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Active math components (Math channel needs to be re-enabled for changes to take effect)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>

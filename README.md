@@ -1,4 +1,4 @@
-[Data dashboard](https://github.com/vedranMv/dataDashboard) [![Build Status](https://ci1.vedran.ml/api/badges/vedranMv/dataDashboard/status.svg)](https://ci1.vedran.ml/vedranMv/dataDashboard) [![License](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)](/License)
+[Data dashboard](https://github.com/vedranMv/dataDashboard) [![Build Status](https://ci1.my-server.dk/api/badges/vedranMv/dataDashboard/status.svg)](https://ci1.my-server.dk/vedranMv/dataDashboard) [![License](https://img.shields.io/badge/license-GPL%20v3.0-brightgreen.svg)](/License)
 =======
  (QT based app for real-time data visualization)
 
@@ -27,8 +27,8 @@ Few screenshots from ``/doc``, demonstrating the UI
 [<img src="doc/math.PNG" width="500" /></a>](doc/comparison.PNG)
 
 Demo videos: 
-* https://vedran.ml/public/projects/datadashboard/demo.mp4
-* https://vedran.ml/public/projects/datadashboard/demo_net.mp4
+* https://my-server.dk/public/projects/datadashboard/demo.mp4
+* https://my-server.dk/public/projects/datadashboard/demo_net.mp4
 
 ## How to run
 
